@@ -1,0 +1,67 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "none"
+  },
+  "display": {
+    "separator": "",
+    "color": {
+      "output": "38;2;235;235;235",
+      "separator": "38;2;130;0;0"
+    },
+    "percent": {
+      "type": 11,
+      "green": 50,
+      "yellow": 80,
+      "color": {
+        "green": "38;2;235;235;235",
+        "yellow": "38;2;222;0;0",
+        "red": "38;2;130;0;0"
+      }
+    },
+    "bar": {
+      "charElapsed": "\u2501",
+      "charTotal": "\u2500",
+      "borderLeft": "",
+      "borderRight": "",
+      "width": 12
+    },
+    "brightColor": false,
+    "size": {
+      "ndigits": 1
+    }
+  },
+  "modules": [
+    "break",
+    {
+      "type": "title",
+      "key": " ",
+      "format": " \u001b[1;38;2;222;0;0m{user-name}\u001b[38;2;235;235;235m@{host-name}\u001b[0m"
+    },
+    {
+      "type": "os",
+      "keyColor": "38;2;222;0;0",
+      "key": " \uf306  ",
+      "format": "Debian {version-id} {codename}"
+    },
+    {
+      "type": "kernel",
+      "keyColor": "38;2;222;0;0",
+      "key": " \uf17c  ",
+      "format": "{release}"
+    },
+    {
+      "type": "shell",
+      "keyColor": "38;2;222;0;0",
+      "key": " \udb80\udd8d  ",
+      "format": "{pretty-name} {version}"
+    },
+    {
+      "type": "memory",
+      "keyColor": "38;2;222;0;0",
+      "key": " \udb80\udf5b  ",
+      "format": "{used} / {total}"
+    },
+    "break"
+  ]
+}

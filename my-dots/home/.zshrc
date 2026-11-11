@@ -21,16 +21,20 @@ source $ZSH/oh-my-zsh.sh
 
 # fastfetch. Will be disabled if above colorscript was chosen to install
 # Logo stripped (2026-11-11; the old eye layouts are still generated, and the
-# previous setup is in ~/.zshrc.bak-2026-11-11). The layout is fixed-width, so
-# pick the widest variant the window can hold: the full box needs 58 columns,
-# the compact box 48; narrower than that, skip it rather than let it wrap.
-# COLUMNS can be unset or 0 in a not-yet-sized shell, so fall back to tput.
-_ff_cols=${COLUMNS:-0}
+# previous setup is in ~/.zshrc.bak-2026-11-11). The layout is fixed-size, so
+# pick the biggest variant the window can hold, by width AND height -- a short
+# window would scroll the top of the box out of view. Heights are the output
+# (16 lines for either box, 7 for mini) plus the 2-line prompt and a spare row;
+# widths come from gen_config.py. Too small for even mini: skip fastfetch.
+# COLUMNS/LINES can be unset or 0 in a not-yet-sized shell, so fall back to tput.
+_ff_cols=${COLUMNS:-0} _ff_rows=${LINES:-0}
 (( _ff_cols > 0 )) || _ff_cols=$(tput cols 2>/dev/null || echo 80)
-if   (( _ff_cols >= 58 )); then fastfetch -c $HOME/.config/fastfetch/config-nologo.jsonc
-elif (( _ff_cols >= 48 )); then fastfetch -c $HOME/.config/fastfetch/config-boxes.jsonc
+(( _ff_rows > 0 )) || _ff_rows=$(tput lines 2>/dev/null || echo 24)
+if   (( _ff_rows >= 19 && _ff_cols >= 46 )); then fastfetch -c $HOME/.config/fastfetch/config-nologo.jsonc
+elif (( _ff_rows >= 19 && _ff_cols >= 31 )); then fastfetch -c $HOME/.config/fastfetch/config-compact-nologo.jsonc
+elif (( _ff_rows >= 10 && _ff_cols >= 24 )); then fastfetch -c $HOME/.config/fastfetch/config-mini-nologo.jsonc
 fi
-unset _ff_cols
+unset _ff_cols _ff_rows
 
 # Set-up icons for files/directories in terminal using lsd
 alias ls='lsd'

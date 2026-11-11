@@ -247,52 +247,79 @@ for name, logo in (("config-logo.jsonc", IMAGE), ("config-logo-ascii.jsonc", ART
 
 # ══════════════════════════════════════════════════════════════════
 # ---- logo-less layout: config-nologo.jsonc ------------------------
-# Not config-boxes with the art cut off: that one was laid out to sit beside
-# the eye, so on its own it hugs column 1 and the name floats above a short
-# box. This one is designed to stand alone: indented off the edge, the
-# user@host set into the top border, and the space the art used to take
-# spent on three grouped sections instead.
-NL_W = 56                      # outer box width
-NL_LEFT = 3                    # column of the left rail (2-col margin)
-NL_RIGHT = NL_LEFT + NL_W - 1  # column of the right rail
-NL_RAIL = f"\x1b[{NL_RIGHT}G│\x1b[{NL_LEFT}G│ "
+# The default .zshrc runs. Tuned to read cleanly without a logo beside it:
+#  - every value trimmed to its short form, so the box can be narrow and the
+#    right rail does not float far away from the text;
+#  - brightColor off: fastfetch bolds keys by default, which made the vertical
+#    rails heavier than the horizontal rules;
+#  - sizes to one decimal, uptime as 2d 4h 56m, no package count.
+# Three widths, each a rung .zshrc steps down to as the window narrows:
+#   config-nologo.jsonc   46 cols  full box, icon + label + value
+#   config-compact-nologo 31 cols  box, icon + value only (labels dropped)
+#   config-mini-nologo    24 cols  no frame, the five shortest rows
+CPU_CMD = ("awk -F': ' '/model name/{print $2; exit}' /proc/cpuinfo"
+           " | sed -E 's/\\((R|TM)\\)//g; s/^[0-9]+th Gen //; s/ Core / /; s/ +/ /g'")
 
-nl = []
+# (module, icon, label, extra fastfetch options). None = section divider.
+ROWS = [
+    ("host", "host", "host", {"format": "{family}"}),
+    ("os", "os", "os", {"format": "Debian {version-id} {codename}"}),
+    ("kernel", "kernel", "kernel", {"format": "{release}"}),
+    None,
+    ("wm", "wm", "wm", {"format": "{pretty-name} {version}"}),
+    ("terminal", "term", "term", {"format": "{pretty-name}"}),
+    ("shell", "shell", "shell", {"format": "{pretty-name} {version}"}),
+    None,
+    ("command", "cpu", "cpu", {"text": CPU_CMD}),
+    ("gpu", "gpu", "gpu", {"format": "{vendor} {name}"}),
+    ("memory", "memory", "memory", {"format": "{used} / {total}"}),
+    ("disk", "disk", "disk", {"folders": "/", "format": "{size-used} / {size-total}"}),
+]
+MINI = {"os", "kernel", "memory", "shell"}
 
 
-def nl_rule(left, right):
-    nl.append({"type": "custom", "format":
-               f"\x1b[{NL_LEFT}G{E(DRED)}{left}{'─' * (NL_W - 2)}{right}{E('0')}"})
+def boxed(width, left, labels):
+    """Box `width` columns wide whose left rail is at column `left`."""
+    right = left + width - 1
+    rail = f"\x1b[{right}G│\x1b[{left}G│ "
+    rule = lambda l, r: {"type": "custom", "format":
+                         f"\x1b[{left}G{E(DRED)}{l}{'─' * (width - 2)}{r}{E('0')}"}
+    # Top border first, then jump back and write the name over its start, so
+    # the rule stays exactly `width` wide whatever the user/host names are.
+    out = [{"type": "title", "key": " ", "format":
+            f"\x1b[{left}G{E(DRED)}╭{'─' * (width - 2)}╮"
+            f"\x1b[{left + 1}G─ {E('1;' + RED)}{{user-name}}{E(WHITE)}@{{host-name}} {E('0')}"}]
+    for r in ROWS:
+        if r is None:
+            out.append(rule("├", "┤"))
+            continue
+        mtype, name, label, kw = r
+        lbl = f"{E(WHITE)}{label.ljust(LABEL_W)}" if labels else ""
+        out.append({"type": mtype, "keyColor": DRED,
+                    "key": f"{rail}{E(RED)}{icon(name)}  {lbl}", **kw})
+    out.append(rule("╰", "╯"))
+    return out
 
 
-def nl_row(mtype, name, label, **kw):
-    nl.append({"type": mtype, "keyColor": DRED,
-               "key": f"{NL_RAIL}{E(RED)}{icon(name)}  {E(WHITE)}{label.ljust(LABEL_W)}",
-               **kw})
+def mini():
+    out = [{"type": "title", "key": " ",
+            "format": f" {E('1;' + RED)}{{user-name}}{E(WHITE)}@{{host-name}}{E('0')}"}]
+    for r in ROWS:
+        if r is not None and r[1] in MINI:
+            mtype, name, label, kw = r
+            out.append({"type": mtype, "keyColor": RED,
+                        "key": f" {icon(name)}  ", **kw})
+    return out
 
 
-# Top border first, then jump back and write the name over its start, so the
-# rule stays exactly NL_W wide whatever the user/host names are.
-nl.append({"type": "title", "key": " ", "format":
-           f"\x1b[{NL_LEFT}G{E(DRED)}╭{'─' * (NL_W - 2)}╮"
-           f"\x1b[{NL_LEFT + 1}G─ {E('1;' + RED)}{{user-name}}{E(WHITE)}@{{host-name}} {E('0')}"})
-nl_row("host", "host", "host", format="{family}")
-nl_row("os", "os", "os", format="{pretty-name}")
-nl_row("kernel", "kernel", "kernel", format="{release}")
-nl_row("uptime", "uptime", "uptime")
-nl_rule("├", "┤")
-nl_row("wm", "wm", "wm", format="{pretty-name} {version} ({protocol-name})")
-nl_row("terminal", "term", "term", format="{pretty-name} {version}")
-nl_row("shell", "shell", "shell", format="{pretty-name} {version}")
-nl_row("packages", "packages", "pkgs", format="{all}")
-nl_rule("├", "┤")
-nl_row("cpu", "cpu", "cpu", format="{name}")
-nl_row("gpu", "gpu", "gpu", format="{name}")
-nl_row("memory", "memory", "memory", format="{used} / {total}")
-nl_row("disk", "disk", "disk", folders="/", format="{size-used} / {size-total}")
-nl_rule("╰", "╯")
+# brightColor off: fastfetch bolds keys by default, which made the vertical
+# rails heavier than the horizontal rules. Sizes to one decimal.
+NL_DISPLAY = {**DISPLAY, "brightColor": False, "size": {"ndigits": 1}}
 
-write("~/.config/fastfetch/config-nologo.jsonc",
-      {"$schema": SCHEMA, "logo": {"type": "none"},
-       "display": DISPLAY, "modules": ["break"] + nl},
-      gutter=0)
+for name, mods_ in (("config-nologo.jsonc", boxed(44, 3, True)),
+                    ("config-compact-nologo.jsonc", boxed(30, 2, False)),
+                    ("config-mini-nologo.jsonc", mini())):
+    write("~/.config/fastfetch/" + name,
+          {"$schema": SCHEMA, "logo": {"type": "none"},
+           "display": NL_DISPLAY, "modules": ["break"] + mods_ + ["break"]},
+          gutter=0)

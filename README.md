@@ -1,399 +1,73 @@
-<div align="center">
+# HolyJoey's Debian Hyprland
 
-# 💌 KoolDots --  Debian-Hyprland Install Script 💌
+My complete Hyprland setup for Debian 13 (Trixie) and newer, installed with one script
+and no questions asked.
 
-#### For Debian 13 (Trixie) and above (testing, SID)
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/LinuxBeginnings/Hyprland-Dots/main/assets/latte.png" width="400" />
-</p>
-
-![GitHub Repo stars](https://img.shields.io/github/stars/LinuxBeginnings/Debian-Hyprland?style=for-the-badge&color=cba6f7) ![GitHub last commit](https://img.shields.io/github/last-commit/LinuxBeginnings/Debian-Hyprland?style=for-the-badge&color=b4befe) ![GitHub repo size](https://img.shields.io/github/repo-size/LinuxBeginnings/Debian-Hyprland?style=for-the-badge&color=cba6f7) <a href="https://discord.gg/RZJgC7KAKm"> <img src="https://img.shields.io/discord/1151869464405606400?style=for-the-badge&logo=discord&color=cba6f7&link=https%3A%2F%2Fdiscord.gg%kool-tech-world"> </a>
-
-<br/>
-</div>
-
-> [!NOTE]
-> **HolyJoey's fork.** `./install.sh` installs my own Hyprland setup with no menus or
-> questions. Everything below this note is the upstream KooL README.
-
-## HolyJoey's setup
+## Install
 
 ```bash
 git clone --depth=1 https://github.com/HolyJoey/Debian-Hyprland.git ~/Debian-Hyprland
 cd ~/Debian-Hyprland
-./install.sh               # full install, unattended (only sudo/chsh ask for your password)
-./apply-my-dots.sh         # or: only apply my configs to an existing Hyprland install
-./install.sh --interactive # the original KooL menus (my dots are still applied at the end)
-```
-
-`install.sh` builds Hyprland from source and installs GTK themes, Bluetooth, Thunar,
-AGS, Quickshell, zsh (oh-my-zsh), SDDM with its theme and the input group, the same
-options I installed with. Instead of KooL's interactive `copy.sh`, the dots step runs
-`apply-my-dots.sh`, which mirrors [`my-dots/`](my-dots) into `~/.config`. Each replaced folder is
-backed up to `~/.config/my-dots-backup-<date>/` first.
-
-What differs from stock KooL dots:
-
-- **Waybar**: TOP-Everforest layout with Dark-Wallust-Obsidian-Edge style, 24h clock,
-  workspaces per monitor, a WiFi module whose click opens a rofi network picker
-  (`hypr/scripts/rofi-wifi-menu.sh`), and a tray that slides out on hover
-- **Workspaces**: every monitor owns 5 workspaces (`hypr/scripts/MonitorWorkspaces.sh`),
-  re-applied on hotplug
-- **Screenshots**: SUPER+SHIFT+S opens [satty](https://github.com/Satty-org/Satty) instead
-  of swappy. It is built from source, because the prebuilt needs a newer glibc than Debian 13
-- **Lock screen**: hyprlock uses my wallpaper, and hypridle runs only from exec-once
-  (`hypridle.service` is masked, because a second daemon breaks locking)
-- **Terminal**: kitty with the Brogrammer theme, and fastfetch as a logo-less box
-  (`fastfetch/gen_config.py`)
-- **Themes**: Flat-Remix-GTK-Blue-Dark, Flat-Remix-Blue-Dark icons, Bibata-Modern-Ice
-  cursor and the dedsec wallpaper
-- **Env**: no NVIDIA env block on non-NVIDIA machines, `LIBVA_DRIVER_NAME=iHD` on Intel
-  (set automatically from `lspci`), and flatpak apps visible in rofi
-- nm-applet and blueman-applet tray icons are disabled
-
-Not included: the low-power toggle, fingerprint login, DisplayLink, and personal apps.
-
-> [!TIP]
-> Hyprland versions come from `hypr-tags.env`. If a newer Hyprland ever breaks the
-> config, pin `HYPRLAND_TAG` there (my machine ran `v0.55.2`).
-
-## IMPORTANT note for Debian `Trixie` users
-
-> If you later update Debian to `Forky` or `SID` you **MUST** recompile Hyprland!!
-> Run `update-hyprland.sh --install --with-deps`
-> Reboot afterwards
-> Failure to do so will prevent Hyprland from starting under `Forky` or `SID`
-> It will return to the login manager
-
-<div align="center">
-<br>
-  <a href="#-announcement-"><kbd> <br> Read this First <br> </kbd></a>&ensp;&ensp;
-  <a href="#-to-use-this-script"><kbd> <br> Installation <br> </kbd></a>&ensp;&ensp;
-  <a href="#gallery-and-videos"><kbd> <br> Gallery <br> </kbd></a>&ensp;&ensp;
- </div><br>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/LinuxBeginnings/Hyprland-Dots/main/assets/latte.png" width="200" />
-</p>
-
-<div align="center">
-👇 KoolDots  Hyprland-Dots related Links 👇
-<br/>
-</div>
-<div align="center">
-<br>
-<a href="https://github.com/LinuxBeginnings/Hyprland-Dots/tree/Debian-Dots"><kbd> <br> Hyprland-Dots Debian repo <br> </kbd></a>
-  <a href="https://www.youtube.com/playlist?list=PLDtGd5Fw5_GjXCznR0BzCJJDIQSZJRbxx"><kbd> <br> Youtube <br> </kbd></a>&ensp;&ensp;
-  <a href="https://github.com/LinuxBeginnings/Hyprland-Dots/wiki"><kbd> <br> Wiki <br> </kbd></a>&ensp;&ensp;
-  <a href="https://github.com/LinuxBeginnings/Hyprland-Dots/wiki/Keybinds"><kbd> <br> Keybinds <br> </kbd></a>&ensp;&ensp;
-  <a href="https://github.com/LinuxBeginnings/Hyprland-Dots/wiki/FAQ"><kbd> <br> FAQ <br> </kbd></a>&ensp;&ensp;
-  <a href="https://discord.gg/RZJgC7KAKm"><kbd> <br> Discord <br> </kbd></a>
-</div><br>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/LinuxBeginnings/Hyprland-Dots/main/assets/latte.png" width="200" />
-</p>
-
-<h3 align="center">
- <img src="https://github.com/LinuxBeginnings/Telegram-Animated-Emojis/blob/main/Activity/Sparkles.webp" alt="Sparkles" width="38" height="38" />
- KooL Hyprland-Dotfiles Showcase
- <img src="https://github.com/LinuxBeginnings/Telegram-Animated-Emojis/blob/main/Activity/Sparkles.webp" alt="Sparkles" width="38" height="38" />
-</h3>
-
-<div align="center">
-
-<https://github.com/user-attachments/assets/49bc12b2-abaf-45de-a21c-67aacd9bb872>
-
-</div>
-
-### Gallery and Videos
-
-#### 🎥 Feb 2025 Video explanation of installation with preset
-
-- [YOUTUBE-LINK](https://youtu.be/wQ70lo7P6vA?si=_QcbrNKh_Bg0L3wC)
-- [YOUTUBE-Hyprland-Playlist](https://youtube.com/playlist?list=PLDtGd5Fw5_GjXCznR0BzCJJDIQSZJRbxx&si=iaNjLulFdsZ6AV-t)
-- [AGS overview DEMO](https://youtu.be/zY5SLNPBJTs)
-
-> [!IMPORTANT]
-> install a backup tool like `snapper` or `timeshift`. and Backup your system before installing hyprland using this script (**HIGHLY RECOMMENDED**).
-
-> [!CAUTION]
-> Download this script on a directory where you have write permissions. ie. HOME. Or any directory within your home directory. Else script will fail
-
-#### ⚠️ Pre-requisites and VERY Important
-
-> Note: At this time `Kali` Linux is NOT supported.
-> A number of users have reported issues installing and using the Dotfiles
-
-- Do not run this installer with `sudo` or as `root`
-- This Installer requires a user with a `sudo` privileges to install packages
-- Debian 13 Trixie or greater. For the correct `GCC` compiler and libs
-- Edit your APT sources (e.g. `/etc/apt/sources.list` or `/etc/apt/sources.list.d/debian.sources`) and ensure `deb-src` is enabled (uncomment `#deb-src...` or change `Types: deb` to `Types: deb deb-src`) to enable source packaging else will not install properly especially Hyprland
-- To easily do this
-```bash
-sudo nano /etc/apt/sources.list
-# OR
-sudo nano /etc/apt/sources.list.d/debian.sources
-sudo apt update
-```
-
-- Delete `#` on the lines with `deb-src`
-- Make sure to install `non-free` repository especially for users with NVIDIA GPUs. You can also install non-free drivers if required.
-    - Edit `install-scripts/nvidia.sh` and change the NVIDIA settings if required
-
-
-#### 🔔 NOTICE TO NVIDIA OWNERS
-
-- KoolDots nvidia install script has been updated 
-- It will offer you choice of drivers:
-  - Debian repo, for older NVIDIA GPUs
-  - CUDA closed drivers 
-  - CUDA Open drivers
-    - Current generation GPUs must choose the open drivers 
-    - Overall the Open drivers are the better choice for supported GPUs 
-- NVIDIA users / owners, after installation, check [`Notes For NVIDIA Users`](https://github.com/LinuxBeginnings/Hyprland-Dots/wiki/Notes_to_remember#--for-nvidia-gpu-users)
-
-### 🪧🪧🪧 ANNOUNCEMENT 🪧🪧🪧
-
-[Debian-Hyprland Changelogs](https://github.com/LinuxBeginnings/Debian-Hyprland/blob/main/CHANGELOGS.md)
-
-- 14 February 2026 Update!
-  - Install and update scripts now build Hyprland v0.54.2 
-  - The installs script has been streamlined and checks for presence and version of pkgs 
-  - Preventing the reinstallation and re-compilation of many packages 
-
-- 10 January 2026 Update!
-- Debian now builds Hyprland v0.53.2!
-    - This requires the just released `Debian-Hyprland v2.9.4` installer
-    - Debian 13 (`Trixie`, aka `Stable`)
-    - While it does now support v0.53.2 - At this time it should not be used for production - Testing is on going but NVIDIA GPUs have not been tested - Intel, AMD, and in VMs only so far
-    - Debian Testing (`Forky`) and Unstable (`SID`) - Build and run Hyprland v0.53.2 without issue
-
-- 10 October 2025 Update!
-- Hyprland-Debian nows builds 0.51.1 from source!
-    - The installer now can be used to install newer releases later
-- If you are currently running 0.49, or 0.50, you can upgrade to 0.51.1 > Note: Newer Hyprland versions (0.53.x+) may require compatibility shims on Debian 13 (Trixie). > Use the provided update/install scripts with `--build-trixie` if needed.
-    - You do not have to re-install everything, but re-running `install.sh` works also
-    - Instructions are available in English and Spanish
-
-#### ✨ Some notes on this installer / Prerequisites
-
-- Recommend installing SDDM. Apart from GDM and SDDM, other Login Managers may not launch `Hyprland`.
-    - yprland can be launched through tty by typing:
-        - Prior to Hyprland v0.53.x `Hyprland` or `hyprland`
-        - After Hyprland v0.53.x you must use `start-hyprland`
-            - Otherwise will generate and error at start up.
-            - You might need to update the login manager if not using SDDM or GDM
-- 🕯️ network-manager-gnome (nm-applet) _has been removed_ from the packages to install. This is because it is known to restart the networkmanager causing issues in the installation process. After you boot up, inorder to get the network-manager applet, install network-manager-gnome. `sudo apt install network-manager-gnome` See below if your network or wifi became unmanaged after installation
-    - Only the GNOME applet is left out. The `network-manager` daemon itself **is** installed and verified: `install-scripts/00-dependencies.sh` installs it when missing (run by `install.sh` and `install-scripts/update-deps.sh`), and `install-scripts/03-Final-Check.sh` checks the package plus that the `NetworkManager` service is enabled and active.
-- 💠 `qml6-module-org-hyprland-style` is installed on purpose - please do not remove it
-    - It ships the `org.hyprland.style` QML module (`/usr/lib/x86_64-linux-gnu/qt6/qml/org/hyprland/style/*.qml`) that the Hyprland-Dots Qt/Quickshell configs load through `QT_QUICK_CONTROLS_STYLE`
-    - It is a separate package, **not** a dependency of `hyprland-guiutils`, so leaving it out breaks themed Qt dialogs and menus while the guiutils tools keep working - which makes the failure hard to trace back to a missing package
-    - The package name is referenced consistently in `install-scripts/01-hypr-pkgs.sh` (optional install list), `install.sh` (Debian package mode), `update-hyprland.sh` and `install-scripts/02-pre-cleanup.sh` (purge list), so a cleanup must remove all four to stay coherent
-
-### 🚩 changing login manager to SDDM
-
-- if you really want to change login manager, there are couple of things you need to carry out before running this install script
-- first install sddm. the no-install-recommends is suggested else it will pull lots of plasma depencies.
-
-```bash
-sudo apt install --no-install-recommends -y sddm
-```
-
-- then ran `sudo dpkg-reconfigure sddm` choose sddm and then reboot.
-- once reboot done, you can ran the script and choose sddm & sddm theme
-- [LINK](https://www.simplified.guide/ubuntu/switch-to-gdm) for some guide
-
-#### 💫 SDDM and GTK Themes offered
-
-- If you opted to install SDDM theme, here's the [LINK](https://github.com/LinuxBeginnings/simple-sddm-2) which is a modified fork of [LINK](https://github.com/Keyitdev/sddm-astronaut-theme)
-- If you opted to install GTK Themes, Icons, here's the [LINK](https://github.com/LinuxBeginnings/GTK-themes-icons). This also includes Bibata Modern Ice cursor.
-
-## ✨ Auto clone and install
-
-> [!CAUTION]
-> If you are using FISH SHELL, DO NOT use this function. Clone and run `install.sh` instead
-
-- you can use this command to automatically clone the installer and ran the script for you
-- NOTE: `curl` package is required before running this command
-
-```bash
-sh <(curl -L https://raw.githubusercontent.com/LinuxBeginnings/Debian-Hyprland/main/auto-install.sh)
-```
-
-## ✨ to use this script
-
-clone this repo, change directory, make executable and run the script:
-
-```bash
-git clone --depth=1 https://github.com/LinuxBeginnings/Debian-Hyprland.git ~/Debian-Hyprland
-cd ~/Debian-Hyprland
-chmod +x install.sh
 ./install.sh
 ```
 
-#### ✨ TO DO once installation done and dotfiles copied
+Run it as your normal user, not root. `sudo` and `chsh` ask for your password; nothing else asks
+anything. Reboot when it finishes.
 
-- SUPER H for HINT or click on the waybar HINT! Button
-- Head over to [`FAQ`](https://github.com/LinuxBeginnings/Hyprland-Dots/wiki/FAQ) and [`TIPS`](https://github.com/LinuxBeginnings/Hyprland-Dots/wiki/TIPS)
-- Head over to [KooL Hyprland WIKI](https://github.com/LinuxBeginnings/Hyprland-Dots/wiki)
-
-- if you installed in your laptop and Brightness and Keyboard brightness does not work you can execute this command `sudo chmod +s $(which brightnessctl)`
-
-#### ✨ Packages that are manually downloaded and build. These packages will not be updated by apt and have to be manually updated
-
-- Asus ROG asusctl [`LINK`](https://gitlab.com/asus-linux/asusctl) and superfxctl [`LINK`](https://gitlab.com/asus-linux/supergfxctl)
-- swww [`LINK`](https://github.com/Horus645/swww)
-- hyprlock [`LINK`](https://github.com/hyprwm/hyprlock) #22 Aug 2024 - still not on repo
-- hypridle [`LINK`](https://github.com/hyprwm/hypridle) #22 Aug 2024 - still not on repo
-- rofi-wayland [`LINK`](https://github.com/lbonn/rofi)
-- wallust [`LINK`](https://codeberg.org/explosion-mental/wallust)
-
-> [!TIP]
-> To update to latest packages, re-running this script will auto update all. Script is configured to pull latest packages build for you.
-
-### 💥 UNINSTALL SCRIPT / Removal of Config Files
-
-- 11 March 2025, due to popular request, created a guided `uninstall.sh` script. USE this with caution as it may render your system unstable.
-- I will not be responsible if your system breaks
-- The best still to revert to previous state of your system is via **timeshift or snapper**
-
-#### 🤬 FAQ
-
-**Most common question I got is, Hey Ja, Why the heck it is taking long time to install? Other distro like Arch its only a minute or two. Why here takes like forever?!?!?**
-
-- Most of the core packages are downloaded, some have to be compiled from source.
-    - Unlike Other distros, these packages already have prepacked binary that can just download and install.
-    - This adds to the install time
-
-## 🛎 **_DEBIAN Hyprland Dots UPDATING NOTES_**
-
-- With this new update to Debian-Hyprland the current Hyprland-Dots are now compatible with Debian.
-
-> [!NOTE]
-> This script does not setup audio. Kindly set up. If you have not, I recommend pipewire. `sudo apt install -y pipewire`
-
-#### 🙋 Got a questions regarding the Hyprland Dots or configurations? 🙋
-
-Head over to wiki Link [`WIKI`](https://github.com/LinuxBeginnings/Hyprland-Dots/wiki)
-
-#### ⌨ Keybinds
-
-Keybinds [`CLICK`](https://github.com/LinuxBeginnings/Hyprland-Dots/wiki/Keybinds)
-
-> [!TIP]
-> KooL Hyprland has a searchable keybind rofi menu. (`SUPER SHIFT K`) or right click the `HINTS` waybar button
-
-#### 🙋 👋 Having issues or questions?
-
-- for the install part, kindly open issue on this repo
-- for the Pre-configured Hyprland dots / configuration, submit issue [`here`](https://github.com/LinuxBeginnings/Hyprland-Dots/issues)
-
-#### 🔧 Proper way to re-installing a particular script from install-scripts directory
-
-- CD into Debian-Hyprland directory and then ran the below command.
-- i.e. `./install-scripts/gtk-themes.sh` - to reinstall GTK Themes or
-- `./install-scripts/sddm.sh` - to reinstall sddm
-
-> [!IMPORTANT]
-> DO NOT CD into `install-scripts` directory to run any of those scripts
-> The scripts are designed to ran outside `install-scripts` directory.
-> If you do the scripts will fail.
-
-#### 🧪 Self-check before building the Hyprland stack
-
-- `./update-hyprland.sh --self-check` scans the repo scripts for pipelines whose
-  consumer exits before the producer finishes (`awk … exit`, `head`, `grep -q`,
-  `grep -m1`) and that are fed by a streaming command such as `apt-cache`, `dpkg -l`
-  or `find`; it then exercises the live `apt-cache` and `dpkg -l` pipelines 15 times.
-- The same scan fails on `clear`/`tput` calls without a `2>/dev/null || true` guard,
-  which would stop a module under `set -e` when the terminal lacks the capability.
-- `./dry-run-build.sh` runs it first and reports `Pipeline self-check: PASS` (or
-  `SKIP`) in its summary; pass `--no-self-check` to skip it.
-- When a run stops, the error now names the failing command and its `file:line`.
-- Colour escapes are only written when stdout is a terminal, so piped output and
-  `Install-Logs/*.log` stay plain text. Logs captured before this fix still contain
-  stray `^[(B` bytes; strip them in place with
-  `perl -pi -e 's/\x1b\(B//g' Install-Logs/*.log`.
-
-#### 🛣️ Roadmap
-
-- [ ] possibly adding gruvbox themes, cursors, icons
-
-#### ❗ some known issues for nvidia
-
-- reports from members of my discord, states that some users of nvidia are getting stuck on sddm login. credit to @Kenni Fix stated was
-
-```
- while in sddm press ctrl+alt+F2 or F3
-log into your account
-`lspci -nn`, find the id of your nvidia card
-`ls /dev/dri/by-path` find the matching id
-`ls -l /dev/dri/by-path` to check where the symlink points to
-)
-```
-
-- add `env = WLR_DRM_DEVICES,/dev/dri/cardX` to the ENVvariables config `~/.config/hypr/UserConfigs/ENVariables.conf` ; X being where the symlink of the gpu points to
-
-- more info from the hyprland wiki [`Hyprland Wiki Link`](https://wiki.hyprland.org/FAQ/#my-external-monitor-is-blank--doesnt-render--receives-no-signal-laptop)
-
-- reports from a member of discord for Nvidia for additional env's
-- remove # from the following env's on
-
-```
-env = GBM_BACKEND,nvidia-drm
-env = WLR_RENDERER_ALLOW_SOFTWARE,1
-```
-
-#### 🫥 Improving performance for Older Nvidia Cards using driver 470
-
-- [`SEE HERE`](https://github.com/JaKooLit/Hyprland-Dots/discussions/123#discussion-6035205)
-
-#### ❗ other known issues
-
-> [!NOTE]
-> Auto start of Hyprland after login (no SDDM or GDM or any login managers)
-
-- This was disabled a few days ago. (19 May 2024). This was because some users, after they used the Distro-Hyprland scripts with other DE (gnome-wayland or plasma-wayland), if they choose to login into gnome-wayland for example, Hyprland is starting.
-- to avoid this, I disabled it. You can re-enable again by editing `~/.zprofile` . Remove all the # on the first lines
-- [ ] ROFI issues (scaling, unexplained scaling etc). This is most likely to experience if you are installing on a system where rofi is currently installed. To fix it uninstall rofi and install rofi-wayland . `sudo apt autoremove rofi` .
-- Install rofi-wayland with
+Already have Hyprland and only want the configs?
 
 ```bash
-cd ~/Debian-Hyprland
-./install-scripts/rofi-wayland.sh
+./apply-my-dots.sh          # asks once before overwriting
+./apply-my-dots.sh --yes    # no questions
+./apply-my-dots.sh --no-satty
 ```
 
-- [ ] Rofi-wayland is compatible with x11 so no need to worry.
+Every folder it replaces is backed up to `~/.config/my-dots-backup-<date>/` first, and
+`~/.zshrc` to `~/.zshrc.my-dots-backup-<date>`.
 
-- [ ] Does not work in Debian Bookworm
-- [ ] sddm blackscreen when log-out
-- [ ] Installing SDDM if or any other Login Manager installed. See [`Issue 2 - SDDM`](https://github.com/LinuxBeginnings/Debian-Hyprland/issues/2)
-- [ ] network is down or become unmanaged [`This`](https://askubuntu.com/questions/71159/network-manager-says-device-not-managed) might help
+## What gets installed
 
-#### 📒 Final Notes
+- Hyprland, built from source (versions are in `hypr-tags.env`)
+- SDDM with its theme, GTK themes, Bluetooth, Thunar, AGS, Quickshell and Yazi
+- zsh with oh-my-zsh
+- My configs from [`my-dots/`](my-dots), copied into `~/.config`
 
-- join my discord channel [`Discord`](https://discord.com/invite/kool-tech-world)
-- Feel free to copy, re-distribute, and use this script however you want. Would appreciate if you give me some loves by crediting my work :)
+## The setup
 
-#### ✍️ Contributing
+- **Waybar**: TOP-Everforest layout with the Dark-Wallust-Obsidian-Edge style, 24h clock,
+  per-monitor workspaces, and a tray that slides out on hover
+- **WiFi**: click the network module for a rofi network picker
+  (`hypr/scripts/rofi-wifi-menu.sh`)
+- **Workspaces**: every monitor owns 5 workspaces, re-applied on hotplug
+  (`hypr/scripts/MonitorWorkspaces.sh`)
+- **Screenshots**: SUPER+SHIFT+S opens [satty](https://github.com/Satty-org/Satty). It is
+  built from source, because the prebuilt needs a newer glibc than Debian 13
+- **Lock screen**: hyprlock shows the dedsec wallpaper. hypridle runs only from Hyprland's
+  exec-once, and `hypridle.service` is masked, because a second daemon breaks locking
+- **Terminal**: kitty with the Brogrammer theme, and fastfetch without a logo. It picks the
+  biggest layout that fits the window (full, compact or mini) by width and height, and skips
+  itself in tiny windows. The layouts come from `fastfetch/gen_config.py`
+- **Themes**: Flat-Remix-GTK-Blue-Dark, Flat-Remix-Blue-Dark icons, Bibata-Modern-Ice cursor
+- **GPU**: `lspci` decides the video env vars. Intel gets `LIBVA_DRIVER_NAME=iHD`, and NVIDIA
+  gets the NVIDIA block
+- **Tray**: no nm-applet or blueman-applet icons; waybar handles network
+- Flatpak apps show up in rofi
 
-- As stated above, these script does not contain actual config files. These are only the installer of packages
-- If you want to contribute and/or test the Hyprland-Dotfiles (development branch), [`Hyprland-Dots-Development`](https://github.com/LinuxBeginnings/Hyprland-Dots/tree/development)
-- Want to contribute on KooL-Hyprland-Dots Click [`HERE`](https://github.com/LinuxBeginnings/Hyprland-Dots/blob/main/CONTRIBUTING.md) for a guide how to contribute
-- Want to contribute on This Installer? Click [`HERE`](https://github.com/LinuxBeginnings/Debian-Hyprland/blob/main/CONTRIBUTING.md) for a guide how to contribute
+## Options
 
-#### 👍👍👍 Thanks and Credits
+```bash
+./install.sh --interactive   # pick components yourself (my configs are still applied)
+./install.sh --interactive --tty   # same, with plain text prompts instead of dialogs
+```
 
-- [`Hyprland`](https://hyprland.org/) Of course to Hyprland and @vaxerski for this awesome Dynamic Tiling Manager.
+If a newer Hyprland ever breaks the config, pin `HYPRLAND_TAG` in `hypr-tags.env`. This
+setup was made on `v0.55.2`.
 
-### 💖 Support
+## Updating the configs in this repo
 
-- a Star on my Github repos would be nice 🌟
+Copy the changed folder from `~/.config` into `my-dots/config/` and write `/home/<user>`
+as `@HOME@`. `apply-my-dots.sh` fills in the real path on install.
 
-- Subscribe to my Youtube Channel [YouTube](https://www.youtube.com/@Ja.KooLit)
+## License
 
-#### 📹 Youtube videos (Click to view and watch the playlist) 📹
-
-[![Youtube Playlist Thumbnail](https://raw.githubusercontent.com/JaKooLit/screenshots/main/Youtube.png)](https://youtube.com/playlist?list=PLDtGd5Fw5_GjXCznR0BzCJJDIQSZJRbxx&si=iaNjLulFdsZ6AV-t)
+GPL-3.0, see [LICENSE.md](LICENSE.md).
