@@ -1,7 +1,10 @@
 # HolyJoey's Debian Hyprland
 
-My complete Hyprland setup for Debian 13 (Trixie) and newer, installed with one script
-and no questions asked.
+My complete Hyprland setup for Debian 13 (Trixie), installed with one script and no
+questions asked.
+
+Based on [JaKooLit's KooL Hyprland](https://github.com/LinuxBeginnings/Debian-Hyprland)
+installer and dotfiles.
 
 ## Install
 
