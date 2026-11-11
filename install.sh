@@ -77,6 +77,8 @@ Options:
   --preset <file>       Load preset file with options
   --force-reinstall     Force APT re-installs where applicable
   --tty                 Use simple TTY prompts instead of whiptail dialogs
+  --interactive         Show the original KooL menus instead of installing
+                        HolyJoey's setup unattended (the default)
   -h, --help            Show this help and exit
 
 Notes:
@@ -85,6 +87,13 @@ Notes:
   are installed by default.
 EOF
 }
+
+# HolyJoey fork: by default install my setup with no menus/questions.
+# Pass --interactive to get the original KooL option menus.
+MY_SETUP=1
+for arg in "$@"; do
+    [ "$arg" = "--interactive" ] && MY_SETUP=0
+done
 
 # Fast-path help so users can inspect options without entering prompts
 for arg in "$@"; do
@@ -527,7 +536,11 @@ print_color $YELLOW "
 printf "\n%.0s" {1..2}
 
 # Prompt user to continue or exit
-read -rp "Do you want to continue with the installation? [y/N]: " confirm
+if [ "$MY_SETUP" -eq 1 ]; then
+    confirm=y
+else
+    read -rp "Do you want to continue with the installation? [y/N]: " confirm
+fi
 case "$confirm" in
 [yY][eE][sS] | [yY])
     echo -e "${OK} Continuing with installation..."
@@ -626,6 +639,8 @@ for ((i = 0; i < ${#args[@]}; i++)); do
         ;;
     esac
 done
+
+[ "$MY_SETUP" -eq 1 ] && TTY_MODE=1
 
 # If env explicitly sets HYPR_BUILD_TRIXIE, honor it.
 if [ -n "${HYPR_BUILD_TRIXIE+x}" ]; then
@@ -858,7 +873,9 @@ clean_existing_hyprland() {
 }
 
 # Welcome / proceed (TTY or whiptail)
-if [ "$TTY_MODE" -eq 1 ]; then
+if [ "$MY_SETUP" -eq 1 ]; then
+    echo "${INFO} Installing HolyJoey's Hyprland setup (no questions). Build method: ${HYPR_INSTALL_MODE}" | tee -a "$LOG"
+elif [ "$TTY_MODE" -eq 1 ]; then
     echo "========================================"
     echo "KooL Debian-Hyprland Trixie+ Install Script"
     echo "========================================"
@@ -1131,7 +1148,7 @@ fi
 nvidia_detected=false
 if lspci | grep -i "nvidia" &>/dev/null; then
     nvidia_detected=true
-    whiptail --title "NVIDIA GPU Detected" --msgbox "NVIDIA GPU detected in your system.\n\nNOTE: The script will install nvidia-dkms, nvidia-utils, and nvidia-settings if you choose to configure." 12 60
+    [ "$TTY_MODE" -eq 1 ] || whiptail --title "NVIDIA GPU Detected" --msgbox "NVIDIA GPU detected in your system.\n\nNOTE: The script will install nvidia-dkms, nvidia-utils, and nvidia-settings if you choose to configure." 12 60
 fi
 
 # Initialize the options array for whiptail checklist
@@ -1150,7 +1167,7 @@ fi
 input_group_detected=false
 if ! groups "$(whoami)" | has_match '\binput\b'; then
     input_group_detected=true
-    whiptail --title "Input Group" --msgbox "You are not currently in the input group.\n\nAdding you to the input group might be necessary for the Waybar keyboard-state functionality." 12 60
+    [ "$TTY_MODE" -eq 1 ] || whiptail --title "Input Group" --msgbox "You are not currently in the input group.\n\nAdding you to the input group might be necessary for the Waybar keyboard-state functionality." 12 60
 fi
 
 # Add 'input_group' option if user is not in input group
@@ -1181,7 +1198,17 @@ options_command+=(
 )
 
 # Capture the selected options before the while loop starts
-if [ "$TTY_MODE" -eq 1 ]; then
+if [ "$MY_SETUP" -eq 1 ]; then
+    # The options HolyJoey originally installed with (no NVIDIA/ROG/pokemon)
+    selected_options="gtk_themes bluetooth thunar ags zsh dots"
+    if [ "$input_group_detected" == "true" ]; then selected_options+=" input_group"; fi
+    if ! check_services_running; then
+        selected_options+=" sddm sddm_theme"
+    else
+        echo "${WARN} Another login manager is active, skipping SDDM." | tee -a "$LOG"
+    fi
+    echo "${INFO} Options: ${selected_options}" | tee -a "$LOG"
+elif [ "$TTY_MODE" -eq 1 ]; then
     # Build a simple list of available keys
     available_opts=()
     if [ "$nvidia_detected" == "true" ]; then available_opts+=(nvidia); fi
@@ -1536,8 +1563,17 @@ for option in "${options[@]}"; do
         ;;
     dots)
         echo "${INFO} Installing pre-configured ${SKY_BLUE}KooL Hyprland dotfiles...${RESET}" | tee -a "$LOG"
-        execute_script "dotfiles-branch.sh" || {
-            echo "${ERROR:-[ERROR]} Dotfiles installation failed" | tee -a "$LOG"
+        # HolyJoey fork: my-dots is a full snapshot of every KooL dots folder,
+        # so the (very interactive) KooL copy.sh is only run in --interactive mode.
+        if [ "$MY_SETUP" -ne 1 ]; then
+            execute_script "dotfiles-branch.sh" || {
+                echo "${ERROR:-[ERROR]} Dotfiles installation failed" | tee -a "$LOG"
+                exit 1
+            }
+        fi
+        echo "${INFO} Applying ${SKY_BLUE}HolyJoey's dots${RESET}..." | tee -a "$LOG"
+        bash "$(dirname "$(readlink -f "$0")")/apply-my-dots.sh" --yes || {
+            echo "${ERROR:-[ERROR]} Applying HolyJoey's dots failed" | tee -a "$LOG"
             exit 1
         }
         ;;

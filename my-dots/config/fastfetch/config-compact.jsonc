@@ -1,0 +1,82 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "file",
+    "source": "~/.config/fastfetch/logo-debian-small.txt",
+    "color": {
+      "1": "38;2;243;139;168",
+      "2": "38;2;235;160;172"
+    },
+    "padding": {
+      "top": 1,
+      "left": 2,
+      "right": 3
+    }
+  },
+  "display": {
+    "separator": " ",
+    "color": {
+      "output": "38;2;205;214;244"
+    },
+    "percent": {
+      "type": 11,
+      "green": 50,
+      "yellow": 80,
+      "color": {
+        "green": "38;2;166;227;161",
+        "yellow": "38;2;249;226;175",
+        "red": "38;2;243;139;168"
+      }
+    },
+    "bar": {
+      "charElapsed": "━",
+      "charTotal": "─",
+      "borderLeft": "",
+      "borderRight": "",
+      "width": 10
+    }
+  },
+  "modules": [
+    "break",
+    {
+      "type": "title",
+      "key": "\u001b[38;2;203;166;247m ",
+      "keyColor": "38;2;88;91;112",
+      "format": "\u001b[38;2;203;166;247m{user-name}\u001b[38;2;108;112;134m@\u001b[38;2;203;166;247m{host-name}"
+    },
+    {
+      "type": "custom",
+      "format": "\u001b[38;2;88;91;112m────────────────────────────────────────\u001b[0m"
+    },
+    {
+      "type": "os",
+      "key": "\u001b[38;2;243;139;168m ",
+      "format": "{pretty-name} {arch}"
+    },
+    {
+      "type": "kernel",
+      "key": "\u001b[38;2;250;179;135m ",
+      "format": "{release}"
+    },
+    {
+      "type": "wm",
+      "key": "\u001b[38;2;137;220;235m ",
+      "format": "{pretty-name} {version} ({protocol-name})"
+    },
+    {
+      "type": "shell",
+      "key": "\u001b[38;2;166;227;161m ",
+      "format": "{pretty-name} {version}"
+    },
+    {
+      "type": "uptime",
+      "key": "\u001b[38;2;180;190;254m󰅐 "
+    },
+    {
+      "type": "memory",
+      "key": "\u001b[38;2;245;194;231m ",
+      "format": "{used} / {total}  {percentage-bar} {percentage}"
+    },
+    "break"
+  ]
+}

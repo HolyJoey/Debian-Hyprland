@@ -1,0 +1,82 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "none"
+  },
+  "display": {
+    "separator": "",
+    "color": {
+      "output": "38;2;235;235;235",
+      "separator": "38;2;130;0;0"
+    },
+    "percent": {
+      "type": 11,
+      "green": 50,
+      "yellow": 80,
+      "color": {
+        "green": "38;2;235;235;235",
+        "yellow": "38;2;222;0;0",
+        "red": "38;2;130;0;0"
+      }
+    },
+    "bar": {
+      "charElapsed": "\u2501",
+      "charTotal": "\u2500",
+      "borderLeft": "",
+      "borderRight": "",
+      "width": 12
+    }
+  },
+  "modules": [
+    "break",
+    {
+      "type": "title",
+      "key": " ",
+      "format": "\u001b[1;38;2;222;0;0m{user-name}\u001b[38;2;235;235;235m@{host-name}\u001b[0m"
+    },
+    {
+      "type": "custom",
+      "format": "\u001b[38;2;130;0;0m\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\u001b[0m"
+    },
+    {
+      "type": "host",
+      "keyColor": "38;2;130;0;0",
+      "key": "\u001b[48G\u2502\u001b[1G\u2502 \u001b[38;2;222;0;0m\udb80\udf22  \u001b[38;2;235;235;235mhost   ",
+      "format": "{family}"
+    },
+    {
+      "type": "os",
+      "keyColor": "38;2;130;0;0",
+      "key": "\u001b[48G\u2502\u001b[1G\u2502 \u001b[38;2;222;0;0m\uf306  \u001b[38;2;235;235;235mos     ",
+      "format": "{pretty-name}"
+    },
+    {
+      "type": "kernel",
+      "keyColor": "38;2;130;0;0",
+      "key": "\u001b[48G\u2502\u001b[1G\u2502 \u001b[38;2;222;0;0m\uf17c  \u001b[38;2;235;235;235mkernel ",
+      "format": "{release}"
+    },
+    {
+      "type": "wm",
+      "keyColor": "38;2;130;0;0",
+      "key": "\u001b[48G\u2502\u001b[1G\u2502 \u001b[38;2;222;0;0m\uf2d0  \u001b[38;2;235;235;235mwm     ",
+      "format": "{pretty-name} {version} ({protocol-name})"
+    },
+    {
+      "type": "terminal",
+      "keyColor": "38;2;130;0;0",
+      "key": "\u001b[48G\u2502\u001b[1G\u2502 \u001b[38;2;222;0;0m\uf489  \u001b[38;2;235;235;235mterm   ",
+      "format": "{pretty-name} {version}"
+    },
+    {
+      "type": "shell",
+      "keyColor": "38;2;130;0;0",
+      "key": "\u001b[48G\u2502\u001b[1G\u2502 \u001b[38;2;222;0;0m\udb80\udd8d  \u001b[38;2;235;235;235mshell  ",
+      "format": "{pretty-name} {version}"
+    },
+    {
+      "type": "custom",
+      "format": "\u001b[38;2;130;0;0m\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\u001b[0m"
+    }
+  ]
+}

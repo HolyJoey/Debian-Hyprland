@@ -1,0 +1,30 @@
+# Satty configuration
+# Mirrors the settings previously used in ~/.config/swappy/config
+
+[general]
+fullscreen = false
+# swappy: paint_mode=brush
+initial-tool = "brush"
+# swappy: early_exit=false
+early-exit = false
+# swappy: fill_shape=false
+default-fill-shapes = false
+# swappy: show_pannel=false -> toolbars stay visible, they are how tools are picked
+default-hide-toolbars = false
+copy-command = "wl-copy"
+# swappy: save_dir + save_filename_format=swappy-%Y%m%d-%H%M%S.png
+output-filename = "~/Pictures/Screenshots/satty-%Y%m%d-%H%M%S.png"
+save-after-copy = false
+# swappy: line_size=5
+annotation-size-factor = 2
+corner-roundness = 12
+primary-highlighter = "block"
+default-round-caps = true
+disable-notifications = false
+no-window-decoration = true
+actions-on-enter = ["save-to-clipboard", "exit"]
+actions-on-escape = ["exit"]
+
+[font]
+family = "Roboto"
+style = "Regular"

@@ -13,6 +13,51 @@
 <br/>
 </div>
 
+> [!NOTE]
+> **HolyJoey's fork.** `./install.sh` installs my own Hyprland setup with no menus or
+> questions. Everything below this note is the upstream KooL README.
+
+## HolyJoey's setup
+
+```bash
+git clone --depth=1 https://github.com/HolyJoey/Debian-Hyprland.git ~/Debian-Hyprland
+cd ~/Debian-Hyprland
+./install.sh               # full install, unattended (only sudo/chsh ask for your password)
+./apply-my-dots.sh         # or: only apply my configs to an existing Hyprland install
+./install.sh --interactive # the original KooL menus (my dots are still applied at the end)
+```
+
+`install.sh` builds Hyprland from source and installs GTK themes, Bluetooth, Thunar,
+AGS, Quickshell, zsh (oh-my-zsh), SDDM with its theme and the input group, the same
+options I installed with. Instead of KooL's interactive `copy.sh`, the dots step runs
+`apply-my-dots.sh`, which mirrors [`my-dots/`](my-dots) into `~/.config`. Each replaced folder is
+backed up to `~/.config/my-dots-backup-<date>/` first.
+
+What differs from stock KooL dots:
+
+- **Waybar**: TOP-Everforest layout with Dark-Wallust-Obsidian-Edge style, 24h clock,
+  workspaces per monitor, a WiFi module whose click opens a rofi network picker
+  (`hypr/scripts/rofi-wifi-menu.sh`), and a tray that slides out on hover
+- **Workspaces**: every monitor owns 5 workspaces (`hypr/scripts/MonitorWorkspaces.sh`),
+  re-applied on hotplug
+- **Screenshots**: SUPER+SHIFT+S opens [satty](https://github.com/Satty-org/Satty) instead
+  of swappy. It is built from source, because the prebuilt needs a newer glibc than Debian 13
+- **Lock screen**: hyprlock uses my wallpaper, and hypridle runs only from exec-once
+  (`hypridle.service` is masked, because a second daemon breaks locking)
+- **Terminal**: kitty with the Brogrammer theme, and fastfetch as a logo-less box
+  (`fastfetch/gen_config.py`)
+- **Themes**: Flat-Remix-GTK-Blue-Dark, Flat-Remix-Blue-Dark icons, Bibata-Modern-Ice
+  cursor and the dedsec wallpaper
+- **Env**: no NVIDIA env block on non-NVIDIA machines, `LIBVA_DRIVER_NAME=iHD` on Intel
+  (set automatically from `lspci`), and flatpak apps visible in rofi
+- nm-applet and blueman-applet tray icons are disabled
+
+Not included: the low-power toggle, fingerprint login, DisplayLink, and personal apps.
+
+> [!TIP]
+> Hyprland versions come from `hypr-tags.env`. If a newer Hyprland ever breaks the
+> config, pin `HYPRLAND_TAG` there (my machine ran `v0.55.2`).
+
 ## IMPORTANT note for Debian `Trixie` users
 
 > If you later update Debian to `Forky` or `SID` you **MUST** recompile Hyprland!!
