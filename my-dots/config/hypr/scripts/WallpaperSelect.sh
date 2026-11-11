@@ -288,11 +288,12 @@ apply_image_wallpaper() {
   done
   local resize_mode
   resize_mode="$(wallpaper_resize_mode "$image_path" "$focused_monitor")"
+  # One transition only; the retry runs just when the first call fails. (An
+  # unconditional second call used to start another random transition on top.)
   "$WWW_CMD" img -o "$focused_monitor" --resize "$resize_mode" "$image_path" "${SWWW_PARAMS[@]}" || {
     sleep 0.2
     "$WWW_CMD" img -o "$focused_monitor" --resize "$resize_mode" "$image_path" "${SWWW_PARAMS[@]}"
   }
-  "$WWW_CMD" img -o "$focused_monitor" --resize "$resize_mode" "$image_path" "${SWWW_PARAMS[@]}"
 
   # Persist per-monitor wallpaper selection
   mkdir -p "$(dirname "$per_monitor_wallpaper_current")" "$(dirname "$per_monitor_wallpaper_link")"
