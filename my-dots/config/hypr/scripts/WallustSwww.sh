@@ -237,6 +237,11 @@ fi
 ensure_wallust_waybar_style
 reload_running_cava_colors
 
+# The SDDM login screen follows the wallpaper too (background + readable
+# wallust colours). Background job; it needs passwordless sudo.
+sddm_sync="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/SddmAutoSync.sh"
+[ -x "$sddm_sync" ] && ("$sddm_sync" "$wallpaper_path" >/dev/null 2>&1 &)
+
 # Rebuild the fastfetch configs + prompt accent now, in the background, so the
 # next terminal opens straight from the cache instead of doing it in .zshrc.
 # gen_config.py skips itself when the colours did not actually change.

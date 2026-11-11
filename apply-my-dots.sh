@@ -225,6 +225,12 @@ fi
 systemctl --user mask hypridle.service >/dev/null 2>&1 &&
     say "$OK hypridle.service masked (runs from exec-once only)" || true
 
+# ---------------------------------------------------------------- hyprsunset
+# Hyprsunset.sh starts and stops hyprsunset itself. The packaged user unit
+# starts a filter-less copy at login, which left the Waybar button on "on".
+systemctl --user mask hyprsunset.service >/dev/null 2>&1 &&
+    say "$OK hyprsunset.service masked (Hyprsunset.sh manages it)" || true
+
 # ---------------------------------------------------------------- satty
 # Screenshot editor (SUPER+SHIFT+S). The upstream prebuilt needs a newer glibc
 # than Debian 13, so build it from source.

@@ -79,12 +79,10 @@ if [[ "$state" == "on" ]]; then
 
 cmd_status() {
   ensure_state
-  # Prefer live process detection; fall back to state file
-  if pgrep -x hyprsunset >/dev/null 2>&1; then
-    onoff="on"
-  else
-    onoff="$(cat "$STATE_FILE" || echo off)"
-  fi
+  # The state file decides. A bare running hyprsunset is not "on": Debian's
+  # hyprsunset.service starts one at login with no filter (masked here, but a
+  # package upgrade or the dots reinstall could bring it back).
+  onoff="$(cat "$STATE_FILE" 2>/dev/null || echo off)"
 
   if [[ "$onoff" == "on" ]]; then
     txt="<span size='18pt'>$(icon_on)</span>"

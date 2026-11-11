@@ -59,6 +59,8 @@ Every folder it replaces is backed up to `~/.config/my-dots-backup-<date>/` firs
   and soft shadows, so it stays readable on any wallpaper. The clock uses the same 12h/24h
   setting as Waybar (`hypr/scripts/LockClock.sh`). hypridle runs only from Hyprland's
   exec-once, and `hypridle.service` is masked, because a second daemon breaks locking
+- **Night light**: `hyprsunset.service` is masked too. Hyprsunset.sh starts hyprsunset
+  itself, and the packaged unit's copy made the Waybar button show "on" after every boot
 - **Terminal**: kitty with the Brogrammer theme, and fastfetch without a logo. It picks the
   biggest layout that fits the window (full, compact or mini) by width and height, and skips
   itself in tiny windows. The layouts come from `fastfetch/gen_config.py`. Its accent colour
@@ -126,6 +128,11 @@ When you change the wallpaper:
 - **The lock screen follows.** It shows the new wallpaper, dimmed and blurred behind the
   clock. Wallpaper effects (SUPER + SHIFT + W) don't change it. It keeps its own copy, so
   removing that wallpaper later doesn't leave the lock screen blank.
+- **The login screen follows.** SDDM gets the new wallpaper and its colours
+  (`hypr/scripts/SddmAutoSync.sh`). Text colours are checked against the part of the wallpaper
+  behind the login form and the background is dimmed just enough to keep them readable. It
+  writes to `/usr/share/sddm/themes`, so it needs passwordless sudo; without it, nothing
+  happens and SUPER + SHIFT + E → Set SDDM Wallpaper still does it by hand.
 
 On first login the dedsec wallpaper is set, and the colours are generated from it. Changing
 the wallpaper automatically every 30 minutes is off. To turn it on, uncomment
