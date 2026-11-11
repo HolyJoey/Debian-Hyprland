@@ -129,6 +129,12 @@ fi
 mkdir -p "$HOME/.local/share/rofi/themes"
 ln -snf "$CFG/rofi/themes/"* "$HOME/.local/share/rofi/themes/"
 
+# One-glyph "Claude Icon" font (Claude logo from simple-icons, at U+10CC00): Waybar shows it
+# on workspaces whose terminal runs Claude Code. Waybar must be restarted to pick up new fonts.
+mkdir -p "$HOME/.local/share/fonts"
+cp -r "$SRC/home/fonts/." "$HOME/.local/share/fonts/"
+fc-cache -f "$HOME/.local/share/fonts" >/dev/null 2>&1 || true
+
 # The snapshot stores the home path as @HOME@ (Hyprland/qt5ct don't expand $HOME there).
 grep -rIl '@HOME@' "${CFG}"/{hypr,qt5ct,qt6ct} 2>/dev/null |
     xargs -r sed -i "s#@HOME@#${HOME}#g"

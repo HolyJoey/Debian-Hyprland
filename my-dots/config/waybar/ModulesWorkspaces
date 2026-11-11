@@ -237,6 +237,9 @@
 		"class<tor browser>": " ",
 		"class<firefox-developer-edition>": "🦊 ",
 
+		// Claude Code prefixes the terminal title with ✳ (idle) or a spinner frame (working);
+		// class+title rules outrank class-only ones in Waybar, so this wins over plain kitty
+		"class<(kitty|konsole|[Aa]lacritty)> title<(✳|✻|✶|✽|✢|·|◐|◓|◑|◒|⠂|⠐|⠈|⠁|⠄|⠠) .*>": "<span font_family='Claude Icon'>􌰀</span> ",
 		"class<(kitty|konsole|[Aa]lacritty)>": " ",
 		// drop-down terminal lives on the hidden scratchpad, but Waybar files it under
 		// a normal workspace; an empty rewrite hides it from the workspace icons

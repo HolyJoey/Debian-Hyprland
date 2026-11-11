@@ -50,6 +50,9 @@ Every folder it replaces is backed up to `~/.config/my-dots-backup-<date>/` firs
   (`hypr/scripts/rofi-wifi-menu.sh`)
 - **Workspaces**: every monitor owns 5 workspaces, re-applied on hotplug
   (`hypr/scripts/MonitorWorkspaces.sh`)
+- **Claude Code icon**: a workspace whose terminal runs Claude Code shows the Claude logo
+  instead of the terminal icon. It is a one-glyph font (`my-dots/home/fonts/ClaudeIcon`),
+  matched on the status glyph Claude Code puts in the window title
 - **Screenshots**: SUPER+SHIFT+S opens [satty](https://github.com/Satty-org/Satty). It is
   built from source, because the prebuilt needs a newer glibc than Debian 13
 - **Lock screen**: hyprlock shows the current wallpaper, dimmed and blurred, with light text
