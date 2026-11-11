@@ -60,6 +60,8 @@ Every folder it replaces is backed up to `~/.config/my-dots-backup-<date>/` firs
 - **GPU**: `lspci` decides the video env vars. Intel gets `LIBVA_DRIVER_NAME=iHD`, and NVIDIA
   gets the NVIDIA block
 - **Tray**: no nm-applet or blueman-applet icons; waybar handles network
+- **Update button** (in the notification drawer): checks this repo on GitHub instead of KooL's
+  dots, and offers to pull and re-run `apply-my-dots.sh` when you are behind
 - Flatpak apps show up in rofi
 
 ## Wallpapers

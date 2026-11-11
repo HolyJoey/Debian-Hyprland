@@ -228,6 +228,11 @@ if [ "$BUILD_SATTY" -eq 1 ] && ! command -v satty >/dev/null 2>&1 && [ ! -x "$HO
     rm -rf "$build_dir"
 fi
 
+# ---------------------------------------------------------------- update button
+# Waybar's update button (hypr/scripts/DotsUpdate.sh) checks this clone against GitHub.
+mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}/holyjoey-dots"
+echo "$REPO_DIR" > "${XDG_STATE_HOME:-$HOME/.local/state}/holyjoey-dots/repo"
+
 # ---------------------------------------------------------------- reload
 if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
     hyprctl reload >/dev/null 2>&1 || true
