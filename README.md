@@ -39,7 +39,13 @@ Every folder it replaces is backed up to `~/.config/my-dots-backup-<date>/` firs
 ## The setup
 
 - **Waybar**: TOP-Everforest layout with the Dark-Wallust-Obsidian-Edge style in fixed
-  black and white, 24h clock, per-monitor workspaces, and a tray that slides out on hover
+  black and white, 24h clock, per-monitor workspaces, and a tray that slides out on hover.
+  The clock's calendar takes the wallpaper accent (scroll to change month, right-click for
+  today). Temp shows the CPU package sensor (Intel coretemp or AMD k10temp). The night-light
+  button uses hyprsunset and Disk's right-click opens baobab; apply-my-dots.sh installs both
+- **Game mode** (SUPER+SHIFT+G): no animations, blur, shadows, gaps or rounding, the wallpaper
+  is stopped, and every window is fully opaque, kitty's background included
+  (`kitty/gamemode.conf`). Turning it off reloads Hyprland, so your own config comes back
 - **WiFi**: click the network module for a rofi network picker
   (`hypr/scripts/rofi-wifi-menu.sh`)
 - **Workspaces**: every monitor owns 5 workspaces, re-applied on hotplug

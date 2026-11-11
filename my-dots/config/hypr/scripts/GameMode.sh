@@ -47,37 +47,30 @@ if [ "$HYPRGAMEMODE" = "true" ] || [ "$HYPRGAMEMODE" = "1" ] ; then
             keyword general:gaps_in 0;\
             keyword general:gaps_out 0;\
             keyword general:border_size 1;\
-            keyword decoration:rounding 0"
-        hyprctl keyword "windowrule opacity 1 override 1 override 1 override, ^(.*)$"
+            keyword decoration:rounding 0;\
+            keyword decoration:active_opacity 1;\
+            keyword decoration:inactive_opacity 1"
+        # Hyprland 0.55 rule syntax (the old "opacity ..., ^(.*)$" form is rejected);
+        # override also beats per-app opacity rules. Gone again on reload.
+        hyprctl keyword windowrule "match:class .*, opacity 1.0 override 1.0 override"
     fi
+    # kitty draws its own see-through background (background_opacity in kitty.conf),
+    # which Hyprland can't touch: kitty.conf includes gamemode.conf last.
+    echo "background_opacity 1.0" > "$config_home/kitty/gamemode.conf"
+    pkill -USR1 -x kitty 2>/dev/null || true
     
     "$WWW_CMD" kill 
     notify-send -e -u low -i "$notif" " Gamemode:" " enabled"
     sleep 0.1
     exit
 else
-    # DISABLE Game Mode (Restore animations/decorations)
-    if [[ "$hypr_config_mode" == "lua" ]]; then
-        # Explicitly restore to defaults (matching settings.lua where possible)
-        hyprctl eval "hl.config({ 
-            animations = { enabled = true },
-            decoration = { shadow = { enabled = true }, blur = { enabled = true }, rounding = 10 },
-            general = { gaps_in = 2, gaps_out = 4, border_size = 2 }
-        })"
-        # Removing rule in Lua mode might require a different approach if no 'remove' exists
-        # We'll reload the config as a fallback or try to nullify it
-        hyprctl eval "hl.window_rule({ name = 'gamemode-opacity', match = { class = 'NONE' }, opacity = 1.0 })"
-    else
-        hyprctl --batch "\
-            keyword animations:enabled 1;\
-            keyword decoration:shadow:enabled 1;\
-            keyword decoration:blur:enabled 1;\
-            keyword general:gaps_in 2;\
-            keyword general:gaps_out 4;\
-            keyword general:border_size 2;\
-            keyword decoration:rounding 10"
-        hyprctl keyword "windowrule opacity 1 override 1 override 1 override, ^(NONE)$"
-    fi
+    # DISABLE Game Mode: reload re-reads the real config, so gaps/borders/blur/
+    # opacity come back as configured (no copies of them here to go stale) and
+    # the game mode window rule is dropped. Side effect: anything toggled by hand
+    # this session (e.g. SUPER+CTRL+O opacity) is reset too.
+    hyprctl reload >/dev/null
+    : > "$config_home/kitty/gamemode.conf"
+    pkill -USR1 -x kitty 2>/dev/null || true
 
     # Restore wallpaper using the official daemon script
     if [[ -x "${SCRIPTSDIR}/WallpaperDaemon.sh" ]]; then
@@ -91,8 +84,6 @@ else
     # Refresh UI components
     if [[ -x "${SCRIPTSDIR}/Refresh.sh" ]]; then
         "${SCRIPTSDIR}/Refresh.sh"
-    else
-        hyprctl reload
     fi
 
     notify-send -e -u normal -i "$notif" " Gamemode:" " disabled"

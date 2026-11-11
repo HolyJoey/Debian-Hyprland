@@ -58,7 +58,8 @@ fi
 # ---------------------------------------------------------------- packages
 # Tools the customised configs/scripts call that the base install may lack.
 pkgs=(rsync jq network-manager grim slurp wl-clipboard libnotify-bin fonts-roboto
-    zenity imagemagick libglib2.0-bin python3)  # wallpaper picker: add dialog, tile, trash; fastfetch accent
+    zenity imagemagick libglib2.0-bin python3   # wallpaper picker: add dialog, tile, trash; fastfetch accent
+    baobab)                                     # Waybar: right-click on Disk
 # VA-API driver for Intel iGPUs (see LIBVA_DRIVER_NAME below)
 if lspci 2>/dev/null | grep -Ei 'vga|3d|display' | grep -qi intel; then
     pkgs+=(intel-media-va-driver)
@@ -75,6 +76,18 @@ done
 if [ "${#missing[@]}" -gt 0 ]; then
     say "$NOTE Installing: ${missing[*]}"
     sudo apt-get install -y "${missing[@]}" || say "$WARN Some packages failed to install, continuing."
+fi
+
+# Waybar's night-light button needs hyprsunset. A from-source install already
+# built it into /usr/local/bin; otherwise take Debian's (trixie has it only in
+# backports).
+if ! command -v hyprsunset >/dev/null 2>&1; then
+    codename="$(. /etc/os-release && echo "${VERSION_CODENAME:-}")"
+    if [ -n "$codename" ] && apt-cache policy hyprsunset 2>/dev/null | grep -q "${codename}-backports"; then
+        sudo apt-get install -y -t "${codename}-backports" hyprsunset || say "$WARN hyprsunset failed to install; the night-light button won't work."
+    else
+        sudo apt-get install -y hyprsunset || say "$WARN hyprsunset failed to install; the night-light button won't work."
+    fi
 fi
 
 # ---------------------------------------------------------------- configs
@@ -156,6 +169,9 @@ ln -sfn "$WP" "$CFG/rofi/.current_wallpaper"
 # .wallpaper_current (from the snapshot) is a copy of the same image. Since the
 # snapshot has no .initial_startup_done, KooL's initial-boot.sh re-runs on next
 # login: it sets the GTK/icon/cursor themes and generates wallust colours from it.
+# Forget fastfetch/gen_config.py's "colours unchanged" fingerprint, so that run
+# rebuilds the fastfetch configs, prompt accent and Waybar calendar for real.
+rm -f "$HOME/.cache/fastfetch-gen.key"
 
 # ---------------------------------------------------------------- shell
 if [ -f "$HOME/.zshrc" ]; then

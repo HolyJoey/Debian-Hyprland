@@ -9,6 +9,8 @@
   "$HOME/.config/waybar/ModulesCustom",
   "$HOME/.config/waybar/ModulesGroups",
   "$HOME/.config/waybar/UserModules",
+  // clock + calendar in the wallpaper accent (written by fastfetch/gen_config.py)
+  "$HOME/.config/waybar/wallust/clock-calendar.jsonc",
   ],
 "layer": "top",
 //"mode": "dock",
@@ -57,18 +59,6 @@
       "tooltip": false,
       "on-click": "rofi -show drun"
 },
-"clock#forest": {
-      "format": "{:L%A %d.%m.%Y - %H:%M}",
-      "tooltip-format": "<span color='#D3C6AA' size='larger'>{:%Y %B}</span>\n<tt>{calendar}</tt>",
-      "calendar-weeks-pos": "right",
-      "today-format": "<span color='#E67E80' weight='ultrabold'>{}</span>",
-      "format-calendar": "<span color='#D3C6AA' weight='normal'>{}</span>",
-      "format-calendar-weeks": "<span color='#7FBBB3'><b>W{:%V}</b></span>",
-      "format-calendar-weekdays": "<span color='#A7C080'><b>{}</b></span>",
-      "on-scroll": {
-                  "calendar": 1
-                   }
-},
 "battery#forest": {
 	//"interval": 5,
 	"align": 0,
@@ -100,7 +90,7 @@
 
 "cpu#forest": {
 	"format": "Cpu  󰍛  {usage}%",
-	"interval": 1,
+	"interval": 2,
 	"min-length": 5,
 	"format-alt-click": "click",
 	"format-alt": "{icon0}{icon1}{icon2}{icon3} {usage:>2}% 󰍛",
@@ -133,10 +123,13 @@
 "temperature#forest": {
 	"interval": 10,
 	"tooltip": true,
-	"hwmon-path": [
-		"/sys/class/hwmon/hwmon1/temp1_input",
-		"/sys/class/thermal/thermal_zone0/temp"
+	// CPU package sensor by its fixed path (hwmonN numbers shift between boots):
+	// Intel coretemp first, AMD k10temp second; neither -> thermal zone 0.
+	"hwmon-path-abs": [
+		"/sys/devices/platform/coretemp.0/hwmon",
+		"/sys/devices/pci0000:00/0000:00:18.3/hwmon"
 	],
+	"input-filename": "temp1_input",
 	//"thermal-zone": 0,
 	"critical-threshold": 82,
 	"format-critical": "Temp {icon}  {temperatureC}°C",
