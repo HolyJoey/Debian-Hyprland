@@ -1,0 +1,9 @@
+/* Loaded after the @theme in config.rasi, so it wins over any theme. */
+
+/* Accent from the wallpaper, written by ~/.config/fastfetch/gen_config.py */
+@import "~/.config/rofi/wallust/accent.rasi"
+
+/* no placeholder text in the search field */
+entry {
+    placeholder: "";
+}

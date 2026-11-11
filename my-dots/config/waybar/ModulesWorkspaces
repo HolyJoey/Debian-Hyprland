@@ -228,7 +228,7 @@
 		"title<.*amazon.*>": " ",
 		"title<.*reddit.*>": " ",
 
-		"class<(firefox|org.mozilla.firefox|librewolf|floorp|mercury-browser|[Cc]achy-browser)>": " ",
+		"class<(firefox|firefox-esr|org.mozilla.firefox|librewolf|floorp|mercury-browser|[Cc]achy-browser)>": " ",
 		"class<zen>": "󰰷 ",
 		"class<(waterfox|waterfox-bin)>": " ",
 		"class<microsoft-edge>": " ",
@@ -238,7 +238,9 @@
 		"class<firefox-developer-edition>": "🦊 ",
 
 		"class<(kitty|konsole|[Aa]lacritty)>": " ",
-		"class<kitty-dropterm>": " ",
+		// drop-down terminal lives on the hidden scratchpad, but Waybar files it under
+		// a normal workspace; an empty rewrite hides it from the workspace icons
+		"class<kitty-dropterm>": "",
 		"class<com.mitchellh.ghostty>": " ",
 		"class<org.wezfurlong.wezterm>": " ",
 		"class<waveterm>": " 🌊",

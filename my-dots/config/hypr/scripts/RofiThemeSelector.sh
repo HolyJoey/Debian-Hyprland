@@ -44,25 +44,16 @@ apply_rofi_theme_to_config() {
   temp_rofi_config_file=$(mktemp)
   cp "$ROFI_CONFIG_FILE" "$temp_rofi_config_file"
 
-  # Comment out any existing @theme entry
-  sed -i -E 's/^(\s*@theme)/\\/\\/\1/' "$temp_rofi_config_file"
-
-  # Add the new @theme entry at the end of the file
+  # Keep exactly one @theme line (the old "comment it out" sed was invalid, so
+  # every pick appended another line), and keep the overrides import after it:
+  # a later @theme would wipe the wallpaper accent and user overrides.
+  sed -i -E '/^\s*(\/\/)?\s*@theme/d; \|99-overrides\.rasi|d' "$temp_rofi_config_file"
   echo "@theme \"$theme_path_with_tilde\"" >>"$temp_rofi_config_file"
+  echo '@import "~/.config/rofi/99-overrides.rasi"' >>"$temp_rofi_config_file"
 
   # Overwrite the original config file
   cp "$temp_rofi_config_file" "$ROFI_CONFIG_FILE"
   rm "$temp_rofi_config_file"
-
-  # Prune old commented-out theme lines to prevent clutter
-  local max_lines=10
-  local total_lines=$(grep -c '^//\s*@theme' "$ROFI_CONFIG_FILE")
-  if [ "$total_lines" -gt "$max_lines" ]; then
-    local excess=$((total_lines - max_lines))
-    for ((i = 1; i <= excess; i++)); do
-      sed -i '0,/^\s*\/\/@theme/s///' "$ROFI_CONFIG_FILE"
-    done
-  fi
 
   return 0
 }

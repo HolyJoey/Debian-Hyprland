@@ -107,11 +107,13 @@ When you change the wallpaper:
 - **The colours follow it.** [wallust](https://codeberg.org/explosion-mental/wallust) builds
   a colour scheme from the image and applies it to Hyprland's window borders, rofi, cava and
   Ghostty.
-- **Fastfetch and the prompt take the wallpaper's accent.** This is the most vivid colour
+- **Fastfetch, the prompt, rofi and the Waybar calendar take the wallpaper's accent.** This is the most vivid colour
   that covers a real part of the image, read straight from the image. Fastfetch uses it for
   the icons and your name, with a darker shade for the frame. The prompt's time and folder
   segments use a darker version, so their white text stays readable. Both update in the next
   terminal you open.
+  rofi gets it through `rofi/99-overrides.rasi`, which `config.rasi` imports after the theme,
+  so it applies to whichever rofi theme you pick (SUPER + CTRL + R)
 - **Waybar stays black and white.** Its colours are fixed. To let it follow the wallpaper
   too, turn on SUPER + SHIFT + E → Toggle Waybar Wallpaper Colors.
 - **Waybar, swaync and rofi restart** to load the new colours, so the bar flickers for a

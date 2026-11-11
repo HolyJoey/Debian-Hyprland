@@ -111,6 +111,10 @@ add_theme_to_config() {
         echo "Updated @theme line to $theme_path_with_tilde"
     fi
 
+    # Keep the overrides import (wallpaper accent, user tweaks) after the theme
+    $SED -i '\|99-overrides\.rasi|d' "$rofi_config_file"
+    echo '@import "~/.config/rofi/99-overrides.rasi"' >> "$rofi_config_file"
+
     # Limit the number of @theme lines to a maximum of 9
     max_lines=9
     total_lines=$(grep -c '^\s*//@theme' "$rofi_config_file")
