@@ -176,6 +176,13 @@ record_wallpaper_history() {
     mv "$hist.tmp" "$hist"
 }
 record_wallpaper_history
+
+# The lock screen follows the wallpaper: hyprlock.conf and hyprlock-2k.conf read
+# .hyprlock_current. A copy rather than a link, so removing the wallpaper from
+# the folder later cannot leave the lock screen blank. (Set Hyprlock Wallpaper
+# in the quick-settings menu still picks a different one until the next change.)
+lock_bg="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/wallpaper_effects/.hyprlock_current"
+cp --remove-destination -f "$wallpaper_path" "$lock_bg" 2>/dev/null || true
 mkdir -p "$(dirname "$wallpaper_current")"
 cp -f "$wallpaper_path" "$wallpaper_current" || true
 

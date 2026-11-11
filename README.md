@@ -46,7 +46,9 @@ Every folder it replaces is backed up to `~/.config/my-dots-backup-<date>/` firs
   (`hypr/scripts/MonitorWorkspaces.sh`)
 - **Screenshots**: SUPER+SHIFT+S opens [satty](https://github.com/Satty-org/Satty). It is
   built from source, because the prebuilt needs a newer glibc than Debian 13
-- **Lock screen**: hyprlock shows the dedsec wallpaper. hypridle runs only from Hyprland's
+- **Lock screen**: hyprlock shows the current wallpaper, dimmed and blurred, with light text
+  and soft shadows, so it stays readable on any wallpaper. The clock uses the same 12h/24h
+  setting as Waybar (`hypr/scripts/LockClock.sh`). hypridle runs only from Hyprland's
   exec-once, and `hypridle.service` is masked, because a second daemon breaks locking
 - **Terminal**: kitty with the Brogrammer theme, and fastfetch without a logo. It picks the
   biggest layout that fits the window (full, compact or mini) by width and height, and skips
@@ -71,7 +73,8 @@ from the bank, pinned to the exact version I have. Skip that download with
 | SUPER + W | Wallpaper picker: a rofi grid with previews |
 | CTRL + ALT + W | Random wallpaper |
 | SUPER + SHIFT + W | Effects on the current wallpaper (blur, sepia, oil paint, vignette...) |
-| SUPER + SHIFT + E → Set Hyprlock Wallpaper | Change the lock screen wallpaper |
+| SUPER + SHIFT + E → Set Hyprlock Wallpaper | A different lock screen wallpaper, until the next wallpaper change |
+| SUPER + SHIFT + E → Toggle Waybar Clock (12H/24H) | 12h or 24h clock, on Waybar and the lock screen |
 | SUPER + SHIFT + E → Toggle Waybar Wallpaper Colors | Let Waybar follow the wallpaper, or go back to fixed black and white |
 
 The picker starts with four special tiles: **Add Wallpaper**, **Random**, **Previous** and
@@ -105,8 +108,9 @@ When you change the wallpaper:
   moment.
 - **Some things keep their own look:** kitty stays on the Brogrammer theme, and the GTK
   theme, icons and cursor don't change.
-- **The lock screen does not follow.** It keeps the dedsec wallpaper until you pick another
-  one through SUPER + SHIFT + E.
+- **The lock screen follows.** It shows the new wallpaper, dimmed and blurred behind the
+  clock. Wallpaper effects (SUPER + SHIFT + W) don't change it. It keeps its own copy, so
+  removing that wallpaper later doesn't leave the lock screen blank.
 
 On first login the dedsec wallpaper is set, and the colours are generated from it. Changing
 the wallpaper automatically every 30 minutes is off. To turn it on, uncomment
