@@ -81,7 +81,9 @@ mapfile -d '' PICS < <(find -L "${wallDIR}" -type f \( \
 RANDOM_PIC="${PICS[$((RANDOM % ${#PICS[@]}))]}"
 RANDOM_PIC_NAME="$(basename "$RANDOM_PIC")"
 
-CURRENT_MON_PIC_PATH=$("$WWW_CMD" query 2>/dev/null | grep "$focused_monitor" | awk '{print $NF}')
+# Everything after "image: ", not the last word: names with spaces were cut
+# to their last word ("Concept-Japanese house.png" -> "house.png")
+CURRENT_MON_PIC_PATH=$("$WWW_CMD" query 2>/dev/null | grep -E "(^|[[:space:]:])${focused_monitor}:" | sed -n 's/.*image: //p' | head -n 1)
 if [[ -z "$CURRENT_MON_PIC_PATH" ]]; then
   if [[ -L "$wallpaper_link" ]]; then
     CURRENT_MON_PIC_PATH="$(readlink -f "$wallpaper_link")"
@@ -93,14 +95,128 @@ if [[ -z "$CURRENT_MON_PIC_PATH" ]]; then
 fi
 CURRENT_MON_PIC_NAME=$(basename "$CURRENT_MON_PIC_PATH")
 
+# ---- "Previous" entry (HolyJoey) ----------------------------------------
+# The last wallpaper this monitor showed before the current one, from the
+# history WallustSwww.sh keeps. Skipped if that file has since been removed.
+PREV_PIC_PATH=""
+history_file="$HOME/.cache/wallpaper_select/history_${focused_monitor}"
+if [[ -f "$history_file" ]]; then
+  cur_real=$(readlink -f "$CURRENT_MON_PIC_PATH" 2>/dev/null)
+  while IFS= read -r h; do
+    if [[ -f "$h" && "$(readlink -f "$h")" != "$cur_real" ]]; then
+      PREV_PIC_PATH="$h"
+      break
+    fi
+  done < <(tac "$history_file")
+fi
+PREV_PIC_NAME=$(basename "$PREV_PIC_PATH")
+
 # Rofi command
 rofi_command="rofi -i -show -dmenu -config $rofi_theme -theme-str $rofi_override"
+
+# ---- "Add Wallpaper" tile (HolyJoey) -------------------------------------
+# First entry of the grid. Picking it opens a file dialog; the chosen images
+# are copied into $wallDIR and the (last) one is applied as the wallpaper.
+ADD_LABEL="Add Wallpaper"
+add_tile="$HOME/.cache/wallpaper_select/add_wallpaper.png"
+rofi_colors="${XDG_CONFIG_HOME:-$HOME/.config}/rofi/wallust/colors-rofi.rasi"
+
+# Draw the tile in the menu's own wallust colours; redraw when they change.
+make_add_tile() {
+  [[ -f "$add_tile" && "$add_tile" -nt "$rofi_colors" ]] && return 0
+  local bg accent
+  bg=$(sed -n 's/^background-color: *\(#[0-9A-Fa-f]\{6\}\).*/\1/p' "$rofi_colors" 2>/dev/null | head -1)
+  accent=$(sed -n 's/^border-color: *\(#[0-9A-Fa-f]\{6\}\).*/\1/p' "$rofi_colors" 2>/dev/null | head -1)
+  bg="${bg:-#1e1e2e}"
+  accent="${accent:-#cdd6f4}"
+  mkdir -p "$(dirname "$add_tile")"
+  magick -size 1600x900 "xc:$bg" \
+    -fill none -stroke "$accent" -strokewidth 12 \
+    -draw "stroke-dasharray 70 45 roundrectangle 50,50 1550,850 70,70" \
+    -stroke none -fill "$accent" \
+    -draw "roundrectangle 765,290 835,610 22,22" \
+    -draw "roundrectangle 640,415 960,485 22,22" \
+    "$add_tile" 2>/dev/null
+}
+
+# ---- Remove a wallpaper (HolyJoey) ---------------------------------------
+# Right-click a tile (hover-select makes it the selected one) or press
+# Shift+Delete: rofi exits with code 10 (kb-custom-1). Right-click normally
+# just selects, and Shift+Delete deletes history entries; both are rebound
+# for this menu only.
+remove_args=(
+  -kb-delete-entry ""
+  -me-select-entry ""
+  -kb-custom-1 "Shift+Delete,MouseSecondary"
+  -theme-str 'entry { placeholder: " 🎞️ Search / Choose Wallpaper   ·   Right-click or Shift+Del: remove"; }'
+)
+confirm_theme="${XDG_CONFIG_HOME:-$HOME/.config}/rofi/config-wallpaper-effect.rasi"
+
+remove_wallpaper() {
+  local path="$1" name ans
+  name=$(basename "$path")
+  # Same look as the effects menu: the wallpaper as the banner, two choices
+  ans=$(printf '%s\n' "Move to trash" "Cancel" |
+    rofi -i -dmenu -no-custom -config "$confirm_theme" -theme-str "
+      window { width: 30%; height: 44%; }
+      inputbar { background-image: url(\"${path//\"/}\", width); padding: 190px 12px 12px 12px; }
+      listview { columns: 1; lines: 2; scrollbar: false; fixed-height: true; }
+      entry { placeholder: \" 🗑️ Remove ${name//\"/} ?\"; }")
+  if [[ "$ans" == "Move to trash" ]]; then
+    if gio trash -- "$path" 2>/dev/null; then
+      notify-send -i user-trash-full "Wallpaper removed" "$name moved to the trash"
+    else
+      notify-send -i "$iDIR/error.png" "Could not remove wallpaper" "$name"
+    fi
+  fi
+  # Back to the picker either way
+  exec "$0"
+}
+
+add_wallpaper() {
+  local picked f name base ext dest n last=""
+  local added=0
+  picked=$(zenity --file-selection --multiple --separator=$'\n' \
+    --title="Add Wallpaper" --filename="$HOME/" \
+    --file-filter="Images and videos | *.jpg *.jpeg *.png *.webp *.gif *.bmp *.JPG *.JPEG *.PNG *.WEBP *.GIF *.mp4 *.mkv *.mov *.webm" \
+    --file-filter="All files | *" 2>/dev/null) || exit 0
+
+  mkdir -p "$wallDIR"
+  while IFS= read -r f; do
+    [[ -f "$f" ]] || continue
+    name=$(basename "$f")
+    dest="$wallDIR/$name"
+    if [[ -e "$dest" ]]; then
+      # Same file already there: nothing to copy, just select it
+      if cmp -s "$f" "$dest"; then last="$name"; continue; fi
+      # Different file with the same name: add a number
+      base="${name%.*}"; ext="${name##*.}"; n=1
+      while [[ -e "$wallDIR/$base-$n.$ext" ]]; do n=$((n + 1)); done
+      name="$base-$n.$ext"; dest="$wallDIR/$name"
+    fi
+    cp -- "$f" "$dest" && added=$((added + 1)) && last="$name"
+  done <<<"$picked"
+
+  if [[ "$added" -gt 0 ]]; then
+    notify-send -i "$wallDIR/$last" "Wallpaper added" \
+      "$([[ $added -eq 1 ]] && echo "$last" || echo "$added wallpapers") added to ${wallDIR/#"$HOME"/\~}"
+  fi
+  # Nothing usable picked: leave the wallpaper as it is
+  [[ -n "$last" ]] || exit 0
+  # main() applies it like any other pick
+  selected_file="$wallDIR/$last"
+}
 
 # Sorting Wallpapers
 menu() {
   IFS=$'\n' sorted_options=($(sort <<<"${PICS[*]}"))
 
+  make_add_tile
+  printf "%s\x00icon\x1f%s\n" "$ADD_LABEL" "$add_tile"
   printf "%s\x00icon\x1f%s\n" "Random: $RANDOM_PIC_NAME" "$RANDOM_PIC"
+  if [[ -n "$PREV_PIC_PATH" ]]; then
+    printf "%s\x00icon\x1f%s\n" "Previous: $PREV_PIC_NAME" "$PREV_PIC_PATH"
+  fi
   if [[ -n "$CURRENT_MON_PIC_PATH" ]]; then
     printf "%s\x00icon\x1f%s\n" "Current: $CURRENT_MON_PIC_NAME" "$CURRENT_MON_PIC_PATH"
   fi
@@ -212,22 +328,12 @@ apply_video_wallpaper() {
 }
 
 # Main function
-main() {
-  choice=$(menu | $rofi_command)
-  choice=$(echo "$choice" | xargs)
-  RANDOM_PIC_NAME=$(echo "$RANDOM_PIC_NAME" | xargs)
-  raw_choice="$choice"
-  choice="${choice#Random: }"
-  choice="${choice#Current: }"
-
-  if [[ -z "$choice" ]]; then
-    echo "No choice selected. Exiting."
-    exit 0
-  fi
-
-  # Resolve selection directly when using Random/Current entries
+# Map the picked menu entry to a file: sets selected_file
+resolve_choice() {
   if [[ "$raw_choice" == Random:\ * ]]; then
     selected_file="$RANDOM_PIC"
+  elif [[ "$raw_choice" == Previous:\ * && -n "$PREV_PIC_PATH" ]]; then
+    selected_file="$PREV_PIC_PATH"
   elif [[ "$raw_choice" == Current:\ * && -n "$CURRENT_MON_PIC_PATH" ]]; then
     selected_file="$CURRENT_MON_PIC_PATH"
   elif [[ -f "$choice" ]]; then
@@ -239,8 +345,42 @@ main() {
     fi
     choice_basename=$(basename "$choice" | sed 's/\(.*\)\.[^.]*$/\1/')
 
-    # Search for the selected file in the wallpapers directory, including subdirectories
-    selected_file=$(find "$wallDIR" -iname "$choice_basename.*" -print -quit)
+    # Exact file name first, so foo.jpg never resolves to foo.png (this also
+    # decides which file a remove targets); then the original name-only match
+    selected_file=$(find "$wallDIR" -name "$choice" -print -quit 2>/dev/null)
+    [[ -n "$selected_file" ]] ||
+      selected_file=$(find "$wallDIR" -iname "$choice_basename.*" -print -quit)
+  fi
+}
+
+main() {
+  local rc
+  choice=$(menu | $rofi_command "${remove_args[@]}")
+  rc=$?
+  choice=$(echo "$choice" | xargs)
+  RANDOM_PIC_NAME=$(echo "$RANDOM_PIC_NAME" | xargs)
+  raw_choice="$choice"
+  choice="${choice#Random: }"
+  choice="${choice#Previous: }"
+  choice="${choice#Current: }"
+
+  if [[ -z "$choice" ]]; then
+    echo "No choice selected. Exiting."
+    exit 0
+  fi
+
+  # Right-click / Shift+Delete on a tile: offer to remove that wallpaper
+  if [[ "$rc" -eq 10 ]]; then
+    [[ "$raw_choice" == "$ADD_LABEL" ]] && exec "$0"
+    resolve_choice
+    [[ -n "$selected_file" && -f "$selected_file" ]] || exec "$0"
+    remove_wallpaper "$selected_file"
+  fi
+
+  if [[ "$raw_choice" == "$ADD_LABEL" ]]; then
+    add_wallpaper   # sets selected_file, or exits if nothing was picked
+  else
+    resolve_choice
   fi
 
   if [[ -z "$selected_file" ]]; then

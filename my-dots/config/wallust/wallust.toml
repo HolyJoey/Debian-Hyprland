@@ -43,11 +43,15 @@ hypr.target = '~/.config/hypr/wallust/wallust-hyprland.conf'
 rofi.template = 'colors-rofi.rasi'
 rofi.target = '~/.config/rofi/wallust/colors-rofi.rasi'
 
-waybar.template = 'colors-waybar.css'
-waybar.target = '~/.config/waybar/wallust/colors-waybar.css'
+#waybar.template = 'colors-waybar.css'
+#waybar.target = '~/.config/waybar/wallust/colors-waybar.css'
 
 fastfetch.template = 'logo-tux.txt'
 fastfetch.target = '~/.config/fastfetch/logo-tux.txt'
+
+# fastfetch accent colours (read by ~/.config/fastfetch/gen_config.py)
+fastfetch_palette.template = 'colors-fastfetch.json'
+fastfetch_palette.target = '~/.config/fastfetch/wallust-palette.json'
 
 
 ghostty.template = 'colors-ghostty.conf'

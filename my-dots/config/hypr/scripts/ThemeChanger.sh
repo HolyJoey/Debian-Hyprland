@@ -183,10 +183,14 @@ if wallust "${wallust_args[@]}" theme -- "${choice}" >"$wallust_log" 2>&1; then
   mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/ghostty" || true
 
   targets=(
-    "${XDG_CONFIG_HOME:-$HOME/.config}/waybar/wallust/colors-waybar.css"
     "${XDG_CONFIG_HOME:-$HOME/.config}/rofi/wallust/colors-rofi.rasi"
     "${XDG_CONFIG_HOME:-$HOME/.config}/hypr/wallust/wallust-hyprland.conf"
   )
+  # Waybar's colours can be fixed (ToggleWaybarWallust.sh comments its template
+  # out); only wait for that file when wallust is set to write it.
+  if [ "$("${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/ToggleWaybarWallust.sh" status)" = on ]; then
+    targets+=("${XDG_CONFIG_HOME:-$HOME/.config}/waybar/wallust/colors-waybar.css")
+  fi
 
   # Normalize Ghostty palette syntax in case upstream templates or older targets used ':'
   ghostty_conf="${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/wallust.conf"

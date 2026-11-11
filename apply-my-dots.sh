@@ -57,7 +57,8 @@ fi
 
 # ---------------------------------------------------------------- packages
 # Tools the customised configs/scripts call that the base install may lack.
-pkgs=(rsync jq network-manager grim slurp wl-clipboard libnotify-bin fonts-roboto)
+pkgs=(rsync jq network-manager grim slurp wl-clipboard libnotify-bin fonts-roboto
+    zenity imagemagick libglib2.0-bin python3)  # wallpaper picker: add dialog, tile, trash; fastfetch accent
 # VA-API driver for Intel iGPUs (see LIBVA_DRIVER_NAME below)
 if lspci 2>/dev/null | grep -Ei 'vga|3d|display' | grep -qi intel; then
     pkgs+=(intel-media-va-driver)
@@ -162,6 +163,11 @@ if [ -f "$HOME/.zshrc" ]; then
 fi
 cp "$SRC/home/.zshrc" "$HOME/.zshrc"
 [ -d "$HOME/.oh-my-zsh" ] || say "$NOTE ~/.zshrc expects oh-my-zsh (select the zsh option in install.sh)."
+# My agnosterzak prompt (colours follow the wallpaper). custom/themes wins over
+# the stock theme of the same name that install-scripts/zsh.sh puts in themes/.
+ZSH_THEMES="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes"
+mkdir -p "$ZSH_THEMES"
+cp "$SRC/home/oh-my-zsh-custom/themes/"*.zsh-theme "$ZSH_THEMES/"
 
 # ---------------------------------------------------------------- GPU env
 USER_ENV="$CFG/hypr/UserConfigs/ENVariables.conf"

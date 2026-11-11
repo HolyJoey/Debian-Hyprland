@@ -11,7 +11,12 @@ plugins=(
     zsh-syntax-highlighting
 )
 
-source $ZSH/oh-my-zsh.sh
+# Accent colours follow the wallpaper: wallust rewrites wallust-palette.json on
+# every wallpaper change; rebuild the fastfetch configs and the prompt
+# colours (~/.cache/prompt-accent.zsh) only when it is newer than them.
+[[ $HOME/.config/fastfetch/wallust-palette.json -nt $HOME/.config/fastfetch/config-nologo.jsonc ]] &&
+  python3 $HOME/.config/fastfetch/gen_config.py >/dev/null 2>&1
+source $ZSH/oh-my-zsh.sh   # after the rebuild: the theme reads prompt-accent.zsh
 
 
 # Display Pokemon-colorscripts

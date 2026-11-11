@@ -159,6 +159,23 @@ fi
 
 # Update helpers that depend on the path
 ln -sf "$wallpaper_path" "$rofi_link" || true
+
+# Per-monitor history for the picker's "Previous" entry (WallpaperSelect.sh).
+# Every way of changing wallpaper (picker, random, auto-change) comes through
+# here. Only wallpapers from the folder count, not effect previews.
+record_wallpaper_history() {
+  local walls mon hist
+  walls="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/wallpapers"
+  [[ "$wallpaper_path" == "$walls"/* ]] || return 0
+  mon="$(get_focused_monitor)"
+  [[ -n "$mon" ]] || return 0
+  hist="$HOME/.cache/wallpaper_select/history_$mon"
+  mkdir -p "${hist%/*}"
+  [[ "$(tail -n 1 "$hist" 2>/dev/null)" == "$wallpaper_path" ]] && return 0
+  { cat "$hist" 2>/dev/null; printf '%s\n' "$wallpaper_path"; } | tail -n 20 >"$hist.tmp" &&
+    mv "$hist.tmp" "$hist"
+}
+record_wallpaper_history
 mkdir -p "$(dirname "$wallpaper_current")"
 cp -f "$wallpaper_path" "$wallpaper_current" || true
 
@@ -197,10 +214,14 @@ if ! wallust "${wallust_args[@]}" run -s "$wallpaper_path" >"$wallust_log" 2>&1;
   exit 1
 fi
 wallust_targets=(
-  "${XDG_CONFIG_HOME:-$HOME/.config}/waybar/wallust/colors-waybar.css"
   "${XDG_CONFIG_HOME:-$HOME/.config}/rofi/wallust/colors-rofi.rasi"
   "${XDG_CONFIG_HOME:-$HOME/.config}/hypr/wallust/wallust-hyprland.conf"
 )
+# Waybar's colours can be fixed (ToggleWaybarWallust.sh comments its template
+# out); only wait for that file when wallust is set to write it.
+if [ "$("${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/ToggleWaybarWallust.sh" status)" = on ]; then
+  wallust_targets+=("${XDG_CONFIG_HOME:-$HOME/.config}/waybar/wallust/colors-waybar.css")
+fi
 if ! wait_for_templates "$start_ts" "${wallust_targets[@]}"; then
   have_notify && notify-send -u critical -a WallustSwww \
     "Wallust templates not updated" "See: $wallust_log"
