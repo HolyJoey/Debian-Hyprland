@@ -167,7 +167,13 @@ cp "$SRC/home/.zshrc" "$HOME/.zshrc"
 # the stock theme of the same name that install-scripts/zsh.sh puts in themes/.
 ZSH_THEMES="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes"
 mkdir -p "$ZSH_THEMES"
-cp "$SRC/home/oh-my-zsh-custom/themes/"*.zsh-theme "$ZSH_THEMES/"
+for theme in "$SRC/home/oh-my-zsh-custom/themes/"*.zsh-theme; do
+    dest="$ZSH_THEMES/$(basename "$theme")"
+    if [ -f "$dest" ] && ! cmp -s "$theme" "$dest"; then
+        cp -a "$dest" "$dest.my-dots-backup-$STAMP"
+    fi
+    cp "$theme" "$dest"
+done
 
 # ---------------------------------------------------------------- GPU env
 USER_ENV="$CFG/hypr/UserConfigs/ENVariables.conf"

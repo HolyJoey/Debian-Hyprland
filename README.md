@@ -20,13 +20,14 @@ anything. Reboot when it finishes.
 Already have Hyprland and only want the configs?
 
 ```bash
-./apply-my-dots.sh          # asks once before overwriting
-./apply-my-dots.sh --yes    # no questions
-./apply-my-dots.sh --no-satty
+./apply-my-dots.sh                  # asks once before overwriting
+./apply-my-dots.sh --yes            # no questions
+./apply-my-dots.sh --no-satty       # skip building satty
+./apply-my-dots.sh --no-wallpapers  # skip the ~800MB wallpaper download
 ```
 
-Every folder it replaces is backed up to `~/.config/my-dots-backup-<date>/` first, and
-`~/.zshrc` to `~/.zshrc.my-dots-backup-<date>`.
+Every folder it replaces is backed up to `~/.config/my-dots-backup-<date>/` first.
+`~/.zshrc` and the zsh prompt theme get a `.my-dots-backup-<date>` copy next to them.
 
 ## What gets installed
 
@@ -80,7 +81,8 @@ The picker starts with four special tiles: **Add Wallpaper**, **Random**, **Prev
   `~/Pictures/wallpapers`, and the last one is applied. If a different file already has the
   same name, a number is added to the new one's name.
 - **Previous** is the wallpaper this monitor showed before the current one, so picking it
-  flips back and forth. Random picks and the auto-change count too.
+  flips back and forth. Random picks and the auto-change count too. On a fresh install it
+  appears after your first wallpaper change.
 - **To remove a wallpaper**, right-click its tile, or highlight it and press Shift+Delete.
   A prompt shows the wallpaper and asks to confirm. Removed files go to the trash, so you
   can get them back.
@@ -123,7 +125,8 @@ setup was made on `v0.55.2`.
 ## Updating the configs in this repo
 
 Copy the changed folder from `~/.config` into `my-dots/config/` and write `/home/<user>`
-as `@HOME@`. `apply-my-dots.sh` fills in the real path on install.
+as `@HOME@`. `apply-my-dots.sh` fills in the real path on install. `~/.zshrc` lives in
+`my-dots/home/`, and the zsh prompt theme in `my-dots/home/oh-my-zsh-custom/themes/`.
 
 ## License
 
