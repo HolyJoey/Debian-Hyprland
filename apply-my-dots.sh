@@ -9,6 +9,7 @@
 #      ./apply-my-dots.sh            (asks before overwriting)
 #      ./apply-my-dots.sh --yes      (no questions)
 #      ./apply-my-dots.sh --no-satty (skip building satty)
+#      ./apply-my-dots.sh --no-wallpapers (skip the ~800MB wallpaper download)
 # ==================================================
 set -euo pipefail
 
@@ -17,15 +18,18 @@ SRC="$REPO_DIR/my-dots"
 CFG="${XDG_CONFIG_HOME:-$HOME/.config}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 SATTY_TAG="v0.22.0"
+BANK_COMMIT="f6fde9158feb6e0a283560c363233ff57ffdb65c"   # LinuxBeginnings/Wallpaper-Bank
 
 ASSUME_YES=0
 BUILD_SATTY=1
+GET_BANK=1
 for arg in "$@"; do
     case "$arg" in
     -y | --yes) ASSUME_YES=1 ;;
     --no-satty) BUILD_SATTY=0 ;;
+    --no-wallpapers) GET_BANK=0 ;;
     -h | --help)
-        sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
+        sed -n '3,/^# ====/p' "$0" | sed '$d; s/^# \{0,1\}//'
         exit 0
         ;;
     *) echo "Unknown option: $arg" >&2; exit 2 ;;
@@ -126,7 +130,26 @@ chmod +x "$CFG/hypr/scripts/"* "$CFG/hypr/UserScripts/"* "$CFG/hypr/initial-boot
 WP_DIR="$HOME/Pictures/wallpapers"
 WP="$WP_DIR/wp4020131-dedsec-wallpapers.png"
 mkdir -p "$WP_DIR"
+# The wallpapers that are not in KooL's Wallpaper-Bank ship in this repo.
 cp -n "$SRC/wallpapers/"* "$WP_DIR/" 2>/dev/null || true
+# The rest (158 files, ~800MB) come from Wallpaper-Bank, pinned to the commit
+# my folder matches. Only the files listed in my-dots/wallpaper-bank.txt are
+# downloaded; existing files are never overwritten.
+if [ "$GET_BANK" -eq 1 ]; then
+    say "$NOTE Downloading wallpapers from Wallpaper-Bank (~800MB, can take a while)..."
+    bank_dir="$(mktemp -d)"
+    if git -C "$bank_dir" init -q &&
+        git -C "$bank_dir" remote add origin https://github.com/LinuxBeginnings/Wallpaper-Bank.git &&
+        sed 's#^#/wallpapers/#' "$SRC/wallpaper-bank.txt" | git -C "$bank_dir" sparse-checkout set --no-cone --stdin &&
+        git -C "$bank_dir" fetch -q --depth=1 --filter=blob:none origin "$BANK_COMMIT" &&
+        git -C "$bank_dir" checkout -q FETCH_HEAD; then
+        rsync -a --ignore-existing "$bank_dir/wallpapers/" "$WP_DIR/"
+        say "$OK Wallpapers in $WP_DIR: $(find "$WP_DIR" -type f | wc -l)"
+    else
+        say "$WARN Wallpaper-Bank download failed; run ./apply-my-dots.sh --yes again later to retry."
+    fi
+    rm -rf "$bank_dir"
+fi
 ln -sfn "$WP" "$CFG/hypr/wallpaper_effects/.hyprlock_current"
 ln -sfn "$WP" "$CFG/rofi/.current_wallpaper"
 # .wallpaper_current (from the snapshot) is a copy of the same image. Since the

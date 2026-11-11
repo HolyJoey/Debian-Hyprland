@@ -56,6 +56,39 @@ Every folder it replaces is backed up to `~/.config/my-dots-backup-<date>/` firs
 - **Tray**: no nm-applet or blueman-applet icons; waybar handles network
 - Flatpak apps show up in rofi
 
+## Wallpapers
+
+The installer puts my whole wallpaper folder (166 images) in `~/Pictures/wallpapers`. The 8
+that are not in KooL's [Wallpaper-Bank](https://github.com/LinuxBeginnings/Wallpaper-Bank)
+ship in [`my-dots/wallpapers/`](my-dots/wallpapers). The other 158 (~800MB) are downloaded
+from the bank, pinned to the exact version I have. Skip that download with
+`./apply-my-dots.sh --no-wallpapers`. To add your own wallpapers, drop images in the folder.
+
+| Keys | What it does |
+| --- | --- |
+| SUPER + W | Wallpaper picker: a rofi grid with previews, plus a "Random" entry |
+| CTRL + ALT + W | Random wallpaper |
+| SUPER + SHIFT + W | Effects on the current wallpaper (blur, sepia, oil paint, vignette...) |
+| SUPER + SHIFT + E → Set Hyprlock Wallpaper | Change the lock screen wallpaper |
+
+When you change the wallpaper:
+
+- **Only the focused monitor changes.** Each monitor keeps its own wallpaper, and it comes
+  back after a reboot.
+- **The colours follow it.** [wallust](https://codeberg.org/explosion-mental/wallust) builds
+  a colour scheme from the image and applies it to Hyprland's window borders, Waybar, rofi,
+  cava and Ghostty.
+- **Waybar, swaync and rofi restart** to load the new colours, so the bar
+  flickers for a moment.
+- **Some things keep their own look:** kitty stays on the Brogrammer theme, fastfetch stays
+  red/white, and the GTK theme, icons and cursor don't change.
+- **The lock screen does not follow.** It keeps the dedsec wallpaper until you pick another
+  one through SUPER + SHIFT + E.
+
+On first login the dedsec wallpaper is set, and the colours are generated from it. Changing
+the wallpaper automatically every 30 minutes is off. To turn it on, uncomment
+`exec-once = $SwwwRandom $wallDIR` in `~/.config/hypr/configs/Startup_Apps.conf`.
+
 ## Options
 
 ```bash
