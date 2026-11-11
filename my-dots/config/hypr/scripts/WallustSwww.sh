@@ -237,6 +237,12 @@ fi
 ensure_wallust_waybar_style
 reload_running_cava_colors
 
+# Rebuild the fastfetch configs + prompt accent now, in the background, so the
+# next terminal opens straight from the cache instead of doing it in .zshrc.
+# gen_config.py skips itself when the colours did not actually change.
+fastfetch_gen="${XDG_CONFIG_HOME:-$HOME/.config}/fastfetch/gen_config.py"
+[ -f "$fastfetch_gen" ] && (python3 "$fastfetch_gen" >/dev/null 2>&1 &)
+
 # Normalize Rofi selection colors to a brighter accent and readable foreground
 rofi_colors="${XDG_CONFIG_HOME:-$HOME/.config}/rofi/wallust/colors-rofi.rasi"
 if [ -f "$rofi_colors" ]; then

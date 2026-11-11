@@ -53,7 +53,9 @@ Every folder it replaces is backed up to `~/.config/my-dots-backup-<date>/` firs
 - **Terminal**: kitty with the Brogrammer theme, and fastfetch without a logo. It picks the
   biggest layout that fits the window (full, compact or mini) by width and height, and skips
   itself in tiny windows. The layouts come from `fastfetch/gen_config.py`. Its accent colour
-  and the zsh prompt's colours come from the wallpaper (see [Wallpapers](#wallpapers))
+  and the zsh prompt's colours come from the wallpaper (see [Wallpapers](#wallpapers)).
+  They are rebuilt in the background when the wallpaper changes and cached, so opening a
+  terminal only reads the cache; re-runs on the same wallpaper are skipped
 - **Themes**: Flat-Remix-GTK-Blue-Dark, Flat-Remix-Blue-Dark icons, Bibata-Modern-Ice cursor
 - **GPU**: `lspci` decides the video env vars. Intel gets `LIBVA_DRIVER_NAME=iHD`, and NVIDIA
   gets the NVIDIA block

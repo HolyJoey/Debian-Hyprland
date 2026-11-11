@@ -14,7 +14,41 @@ layout can step down to. Widths are the minimum the file needs.
 
 Re-run after editing:  python3 ~/.config/fastfetch/gen_config.py
 """
-import json, os, re
+import hashlib, json, os, re, sys
+
+# ---- skip when nothing changed ------------------------------------
+# wallust re-runs on the same wallpaper (login, dark/light toggle, game mode,
+# terminal theme pickers) rewrite wallust-palette.json with identical colours,
+# which bumps its mtime and used to make .zshrc rebuild everything. The output
+# depends only on the palette, the wallpaper image and this script, so hash
+# those; same hash -> just touch config-nologo.jsonc (what .zshrc compares
+# against) and stop. --force rebuilds regardless.
+_KEY_FILE = os.path.expanduser("~/.cache/fastfetch-gen.key")
+_STAMP = os.path.expanduser("~/.config/fastfetch/config-nologo.jsonc")
+
+
+def _inputs_key():
+    h = hashlib.sha1()
+    for f in (os.path.expanduser("~/.config/fastfetch/wallust-palette.json"),
+              os.path.expanduser("~/.config/hypr/wallpaper_effects/.wallpaper_current"),
+              os.path.abspath(__file__)):
+        try:
+            with open(f, "rb") as fh:
+                h.update(fh.read())
+        except OSError:
+            h.update(b"<missing>")
+        h.update(b"\0")
+    return h.hexdigest()
+
+
+_KEY = _inputs_key()
+if "--force" not in sys.argv and os.path.exists(_STAMP):
+    try:
+        if open(_KEY_FILE).read().strip() == _KEY:
+            os.utime(_STAMP)
+            sys.exit(0)
+    except OSError:
+        pass
 
 E = lambda c: "\x1b[" + c + "m"
 
@@ -456,3 +490,8 @@ for name, mods_ in (("config-nologo.jsonc", boxed(44, 3, True)),
           {"$schema": SCHEMA, "logo": {"type": "none"},
            "display": NL_DISPLAY, "modules": ["break"] + mods_ + ["break"]},
           gutter=0)
+
+# Record what this build was made from (see "skip when nothing changed").
+os.makedirs(os.path.dirname(_KEY_FILE), exist_ok=True)
+with open(_KEY_FILE, "w") as f:
+    f.write(_KEY + "\n")
