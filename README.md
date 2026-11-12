@@ -97,8 +97,8 @@ installer leaves it alone and skips SDDM, so that login screen keeps its own loo
 --sddm` switches to SDDM anyway (from the next reboot).
 
 `./apply-my-dots.sh --restore` puts the newest backup back (the three newest are kept), and each
-run is logged in `~/.local/state/holyjoey-dots/`. An NVIDIA card without a driver gets Debian's
-driver (`./install.sh --no-nvidia` skips that).
+run is logged in `~/.local/state/holyjoey-dots/`. NVIDIA drivers are not installed (install them
+yourself); the NVIDIA settings in the config are switched on when an NVIDIA card is found.
 
 `./apply-my-dots.sh --dry-run` shows what would be installed and overwritten without changing
 anything. `--no-wallpapers` (also on `install.sh`) skips the wallpaper pack. Screens of 1440p and

@@ -82,8 +82,6 @@ Options:
   --wallpaper <file>    Theme everything to this wallpaper. Default: the one your
                         current desktop (GNOME, KDE, XFCE, ...) uses, else dedsec
   --no-wallpapers       Skip downloading HolyJoey's wallpaper pack (~800MB)
-  --no-nvidia           Do not install NVIDIA drivers (default: Debian's driver is
-                        installed when an NVIDIA card has no driver yet)
   --sddm                Switch to SDDM even when GDM/LightDM is the current login
                         manager (takes effect at the next reboot)
   -h, --help            Show this help and exit
@@ -613,7 +611,6 @@ TTY_MODE=0
 MY_WALLPAPER=""
 MY_NO_BANK=0
 FORCE_SDDM=0
-MY_NO_NVIDIA=0
 for ((i = 0; i < ${#args[@]}; i++)); do
     case "${args[$i]}" in
     --build-trixie)
@@ -652,9 +649,6 @@ for ((i = 0; i < ${#args[@]}; i++)); do
         ;;
     --sddm)
         FORCE_SDDM=1
-        ;;
-    --no-nvidia)
-        MY_NO_NVIDIA=1
         ;;
     -h | --help)
         print_help
@@ -1230,15 +1224,6 @@ if [ "$MY_SETUP" -eq 1 ]; then
     # The options HolyJoey originally installed with (no NVIDIA/ROG/pokemon)
     selected_options="gtk_themes bluetooth thunar ags zsh dots"
     if [ "$input_group_detected" == "true" ]; then selected_options+=" input_group"; fi
-    # NVIDIA card without a driver: install Debian's (first, so it is in place
-    # before the dots enable the NVIDIA environment block).
-    if [ "$nvidia_detected" == "true" ] && [ "$MY_NO_NVIDIA" -ne 1 ]; then
-        if command -v nvidia-smi >/dev/null 2>&1 || dpkg-query -W -f='${Status}' nvidia-driver 2>/dev/null | grep -q 'ok installed'; then
-            echo "${INFO} NVIDIA driver already installed, leaving it alone." | tee -a "$LOG"
-        else
-            selected_options="nvidia ${selected_options}"
-        fi
-    fi
     if ! check_services_running; then
         selected_options+=" sddm sddm_theme"
     elif [ "$FORCE_SDDM" -eq 1 ]; then
@@ -1560,7 +1545,7 @@ for option in "${options[@]}"; do
         ;;
     nvidia)
         echo "${INFO} Configuring ${SKY_BLUE}nvidia stuff${RESET}" | tee -a "$LOG"
-        if [ "$MY_SETUP" -eq 1 ]; then nv_mode="debian"; else nv_mode=$(prompt_nvidia_mode); fi
+        nv_mode=$(prompt_nvidia_mode)
         echo "${INFO} Using NVIDIA mode: ${YELLOW}${nv_mode}${RESET}" | tee -a "$LOG"
         execute_script "nvidia.sh" --mode="${nv_mode}"
         ;;
