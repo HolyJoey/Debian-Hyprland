@@ -81,6 +81,9 @@ Options:
                         HolyJoey's setup unattended (the default)
   --wallpaper <file>    Theme everything to this wallpaper. Default: the one your
                         current desktop (GNOME, KDE, XFCE, ...) uses, else dedsec
+  --no-wallpapers       Skip downloading HolyJoey's wallpaper pack (~800MB)
+  --sddm                Switch to SDDM even when GDM/LightDM is the current login
+                        manager (takes effect at the next reboot)
   -h, --help            Show this help and exit
 
 Notes:
@@ -606,6 +609,8 @@ args=("$@")
 FORCE_REINSTALL=0
 TTY_MODE=0
 MY_WALLPAPER=""
+MY_NO_BANK=0
+FORCE_SDDM=0
 for ((i = 0; i < ${#args[@]}; i++)); do
     case "${args[$i]}" in
     --build-trixie)
@@ -638,6 +643,12 @@ for ((i = 0; i < ${#args[@]}; i++)); do
         ;;
     --wallpaper=*)
         MY_WALLPAPER="$(readlink -f -- "${args[$i]#--wallpaper=}")"
+        ;;
+    --no-wallpapers)
+        MY_NO_BANK=1
+        ;;
+    --sddm)
+        FORCE_SDDM=1
         ;;
     -h | --help)
         print_help
@@ -1215,8 +1226,11 @@ if [ "$MY_SETUP" -eq 1 ]; then
     if [ "$input_group_detected" == "true" ]; then selected_options+=" input_group"; fi
     if ! check_services_running; then
         selected_options+=" sddm sddm_theme"
+    elif [ "$FORCE_SDDM" -eq 1 ]; then
+        selected_options+=" sddm sddm_theme"
+        echo "${NOTE} --sddm: replacing ${active_services[*]} with SDDM at the next reboot." | tee -a "$LOG"
     else
-        echo "${WARN} Another login manager is active, skipping SDDM." | tee -a "$LOG"
+        echo "${WARN} Another login manager is active, skipping SDDM (the login screen will not follow the wallpaper; --sddm switches to SDDM)." | tee -a "$LOG"
     fi
     echo "${INFO} Options: ${selected_options}" | tee -a "$LOG"
 elif [ "$TTY_MODE" -eq 1 ]; then
@@ -1583,7 +1597,7 @@ for option in "${options[@]}"; do
             }
         fi
         echo "${INFO} Applying ${SKY_BLUE}HolyJoey's dots${RESET}..." | tee -a "$LOG"
-        bash "$(dirname "$(readlink -f "$0")")/apply-my-dots.sh" --yes ${MY_WALLPAPER:+--wallpaper "$MY_WALLPAPER"} || {
+        bash "$(dirname "$(readlink -f "$0")")/apply-my-dots.sh" --yes ${MY_WALLPAPER:+--wallpaper "$MY_WALLPAPER"} $([ "$MY_NO_BANK" -eq 1 ] && echo --no-wallpapers) || {
             echo "${ERROR:-[ERROR]} Applying HolyJoey's dots failed" | tee -a "$LOG"
             exit 1
         }

@@ -73,7 +73,11 @@ done
 for manager in "${login[@]}"; do
   if systemctl is-active --quiet "$manager.service" > /dev/null 2>&1; then
     echo "$manager.service is active, disabling it..." >> "$LOG" 2>&1
-    sudo systemctl disable "$manager.service" --now >> "$LOG" 2>&1 || echo "Failed to disable $manager.service" >> "$LOG"
+    # Stopping it now would kill the desktop session this installer runs in,
+    # so inside a graphical session only disable it (SDDM takes over at reboot).
+    now_flag="--now"
+    [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] && now_flag=""
+    sudo systemctl disable "$manager.service" $now_flag >> "$LOG" 2>&1 || echo "Failed to disable $manager.service" >> "$LOG"
   else
     echo "$manager.service is not active" >> "$LOG" 2>&1
   fi
@@ -83,6 +87,10 @@ printf "\n%.0s" {1..1}
 printf "${INFO} Activating sddm service........\n"
 sudo systemctl set-default graphical.target 2>&1 | tee -a "$LOG"
 sudo systemctl enable sddm.service 2>&1 | tee -a "$LOG"
+# Debian's display-manager units only start the one named in this file.
+if [ -f /etc/X11/default-display-manager ]; then
+  echo /usr/bin/sddm | sudo tee /etc/X11/default-display-manager >/dev/null
+fi
 
 wayland_sessions_dir=/usr/share/wayland-sessions
 [ ! -d "$wayland_sessions_dir" ] && { printf "$CAT - $wayland_sessions_dir not found, creating...\n"; sudo mkdir -p "$wayland_sessions_dir" 2>&1 | tee -a "$LOG"; }

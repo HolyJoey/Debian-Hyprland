@@ -14,6 +14,7 @@
 #      ./apply-my-dots.sh --sddm-only (only the login-screen step below;
 #                                      install.sh runs it after the SDDM theme)
 #      ./apply-my-dots.sh --fresh     (reset everything, also what an update keeps)
+#      ./apply-my-dots.sh --dry-run   (only show what would happen, change nothing)
 #
 #  Run again on a machine that already has these dots (the Waybar update button
 #  does this) it is an UPDATE: your monitor layout, workspace rules, keyboard
@@ -39,6 +40,7 @@ USER_WP=""
 want_wp=0
 SDDM_ONLY=0
 FRESH=0
+DRY_RUN=0
 for arg in "$@"; do
     if [ "$want_wp" -eq 1 ]; then USER_WP="$arg"; want_wp=0; continue; fi
     case "$arg" in
@@ -46,6 +48,7 @@ for arg in "$@"; do
     --wallpaper=*) USER_WP="${arg#--wallpaper=}" ;;
     --sddm-only) SDDM_ONLY=1 ;;
     --fresh) FRESH=1 ;;
+    --dry-run) DRY_RUN=1 ;;
     -y | --yes) ASSUME_YES=1 ;;
     --no-satty) BUILD_SATTY=0 ;;
     --no-wallpapers) GET_BANK=0 ;;
@@ -85,6 +88,19 @@ sddm_setup() {
         cat -- "$wp" >"$theme/Backgrounds/default"
         rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/sddm_autosync/stamp"
         say "$OK SDDM login screen: $(basename "$wp")"
+        # Colours too, when wallust is already installed: generate the palette
+        # from the wallpaper (as the first login would) and let the sync script
+        # write contrast-checked colours into theme.conf.
+        if command -v wallust >/dev/null 2>&1 && [ -f "$CFG/wallust/wallust.toml" ] &&
+            [ -x "$CFG/hypr/scripts/SddmAutoSync.sh" ]; then
+            (
+                wallust_args=()
+                # shellcheck source=/dev/null
+                [ -f "$CFG/hypr/scripts/WallustConfig.sh" ] && . "$CFG/hypr/scripts/WallustConfig.sh"
+                wallust "${wallust_args[@]}" run -s "$wp"
+            ) >/dev/null 2>&1 || true
+            "$CFG/hypr/scripts/SddmAutoSync.sh" "$wp" >/dev/null 2>&1 || true
+        fi
     fi
 }
 if [ "$SDDM_ONLY" -eq 1 ]; then
@@ -204,12 +220,16 @@ fi
 [[ "$KB_LAYOUT" =~ ^[A-Za-z0-9_,-]+$ ]] || KB_LAYOUT=""
 [[ "$KB_VARIANT" =~ ^[A-Za-z0-9_,-]*$ ]] || KB_VARIANT=""
 
-if [ "$ASSUME_YES" -ne 1 ]; then
+if [ "$ASSUME_YES" -ne 1 ] && [ "$DRY_RUN" -ne 1 ]; then
     say "$NOTE This overwrites these folders in $CFG (a backup of each is made first):"
     say "      $(ls "$SRC/config" | tr '\n' ' ')"
     say "      plus ~/.zshrc"
     read -rp "Continue? [y/N] " ans
     [[ "$ans" =~ ^[Yy]$ ]] || { say "Aborted."; exit 0; }
+    if [ "$GET_BANK" -eq 1 ] && [ "$UPDATE" -ne 1 ]; then
+        read -rp "Also download my wallpaper pack (158 images, ~800MB)? [Y/n] " ans
+        [[ "$ans" =~ ^[Nn]$ ]] && GET_BANK=0
+    fi
 fi
 
 # ---------------------------------------------------------------- packages
@@ -233,7 +253,7 @@ for p in "${pkgs[@]}"; do
     # dpkg-query rather than dpkg -s: the latter errors on multi-arch installs
     dpkg-query -W -f='${Status}\n' "$p" 2>/dev/null | grep -q 'install ok installed' || missing+=("$p")
 done
-if [ "${#missing[@]}" -gt 0 ]; then
+if [ "${#missing[@]}" -gt 0 ] && [ "$DRY_RUN" -ne 1 ]; then
     say "$NOTE Installing: ${missing[*]}"
     sudo apt-get install -y "${missing[@]}" || say "$WARN Some packages failed to install, continuing."
 fi
@@ -241,7 +261,7 @@ fi
 # Waybar's night-light button needs hyprsunset. A from-source install already
 # built it into /usr/local/bin; otherwise take Debian's (trixie has it only in
 # backports).
-if ! command -v hyprsunset >/dev/null 2>&1; then
+if [ "$DRY_RUN" -ne 1 ] && ! command -v hyprsunset >/dev/null 2>&1; then
     codename="$(. /etc/os-release && echo "${VERSION_CODENAME:-}")"
     if [ -n "$codename" ] && apt-cache policy hyprsunset 2>/dev/null | grep -q "${codename}-backports"; then
         sudo apt-get install -y -t "${codename}-backports" hyprsunset || say "$WARN hyprsunset failed to install; the night-light button won't work."
@@ -267,6 +287,41 @@ protect=(
 if [ "$UPDATE" -eq 1 ]; then
     protect+=(--exclude='/monitors.conf' --exclude='/workspaces.conf'
         --filter='P /.initial_startup_done')
+fi
+
+# Tallest connected screen, for the lock-screen layout below.
+max_height=0
+for st in /sys/class/drm/card*-*/status; do
+    [ "$(cat "$st" 2>/dev/null)" = "connected" ] || continue
+    h="$(head -n1 "${st%status}modes" 2>/dev/null | sed -n 's/^[0-9]*x\([0-9]*\).*/\1/p')"
+    [ -n "$h" ] && [ "$h" -gt "$max_height" ] && max_height="$h"
+done
+IS_VM=0
+systemd-detect-virt -q --vm 2>/dev/null && IS_VM=1
+
+if [ "$DRY_RUN" -eq 1 ]; then
+    say "$NOTE Dry run: nothing is changed."
+    say "  Mode:            $([ "$UPDATE" -eq 1 ] && echo "update (monitors, keyboard, Waybar layout, themes kept)" || echo "fresh install")"
+    say "  Wallpaper:       ${FOUND_WP:-dedsec default (none found)}"
+    say "  Keyboard layout: ${KB_LAYOUT:-us (snapshot default)}${KB_VARIANT:+ ($KB_VARIANT)}"
+    say "  Lock screen:     $([ "$max_height" -ge 1440 ] && echo "2k layout (${max_height}p screen)" || echo "standard layout")"
+    say "  Virtual machine: $([ "$IS_VM" -eq 1 ] && echo "yes (hardware cursors off)" || echo no)"
+    say "  Packages to install: ${missing[*]:-none}"
+    command -v hyprsunset >/dev/null 2>&1 || say "  Also installs:   hyprsunset"
+    say "  Wallpaper pack:  $([ "$GET_BANK" -eq 1 ] && echo "download ~800MB (existing files kept)" || echo skipped)"
+    say "  Config folders (files that would change / be removed):"
+    for src_dir in "$SRC"/config/*/; do
+        name="$(basename "$src_dir")"
+        [ "$name" = "systemd" ] && continue
+        if [ -d "$CFG/$name" ]; then
+            n="$(rsync -ani --delete "${protect[@]}" "$src_dir" "$CFG/$name/" | grep -vc '^\.d' || true)"
+            say "    $name: $n"
+        else
+            say "    $name: new"
+        fi
+    done
+    say "  Also replaced:   ~/.zshrc (backup kept), zsh prompt theme"
+    exit 0
 fi
 
 backup_root="$CFG/my-dots-backup-$STAMP"
@@ -310,6 +365,19 @@ if [ -n "$KB_LAYOUT" ]; then
     sed -i -E "s|^( *kb_layout *=).*|\\1 $KB_LAYOUT|; s|^( *kb_variant *=).*|\\1 $KB_VARIANT|" \
         "$CFG/hypr/configs/SystemSettings.conf"
     say "$OK Keyboard layout: $KB_LAYOUT${KB_VARIANT:+ ($KB_VARIANT)}"
+fi
+
+# Lock screen: the 2k layout on 1440p and taller screens (the standard one
+# stays next to it as hyprlock-1080p.conf).
+if [ "$max_height" -ge 1440 ] && [ -f "$CFG/hypr/hyprlock-2k.conf" ]; then
+    cp "$CFG/hypr/hyprlock.conf" "$CFG/hypr/hyprlock-1080p.conf"
+    cp "$CFG/hypr/hyprlock-2k.conf" "$CFG/hypr/hyprlock.conf"
+    say "$OK Lock screen: 2k layout (${max_height}p screen)"
+fi
+# Virtual machine: hardware cursors are usually invisible there.
+if [ "$IS_VM" -eq 1 ]; then
+    sed -i -E 's|^( *no_hardware_cursors *=) *[0-9a-z]+|\1 1|' "$CFG/hypr/configs/SystemSettings.conf"
+    say "$NOTE Virtual machine: hardware cursors disabled"
 fi
 
 # Waybar layout + style (relative symlinks, so they survive a username change).
