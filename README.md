@@ -96,6 +96,10 @@ The login screen part needs SDDM. If another login manager (GDM, LightDM) is alr
 installer leaves it alone and skips SDDM, so that login screen keeps its own look. `./install.sh
 --sddm` switches to SDDM anyway (from the next reboot).
 
+`./apply-my-dots.sh --restore` puts the newest backup back (the three newest are kept), and each
+run is logged in `~/.local/state/holyjoey-dots/`. An NVIDIA card without a driver gets Debian's
+driver (`./install.sh --no-nvidia` skips that).
+
 `./apply-my-dots.sh --dry-run` shows what would be installed and overwritten without changing
 anything. `--no-wallpapers` (also on `install.sh`) skips the wallpaper pack. Screens of 1440p and
 up get the 2k lock-screen layout, and a virtual machine gets hardware cursors turned off.

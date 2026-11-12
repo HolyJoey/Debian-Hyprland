@@ -596,6 +596,21 @@ printf "\n%.0s" {1..1}
 printf "\n%s${SKY_BLUE}Attempting to remove selected directories${RESET}\n" "${NOTE}"
 remove_directories /tmp/selected_directories.txt
 
+# HolyJoey dots: what apply-my-dots.sh set up outside ~/.config.
+if whiptail --title "HolyJoey dots extras" --yesno \
+    "Also undo what apply-my-dots.sh added?\n\n- satty in ~/.local/bin\n- masked hypridle/hyprsunset user services\n- SDDM theme files owned by you (back to root)\n- Claude icon font, update-button state and logs\n- ~/.zshrc (your newest backup is put back)" 16 72; then
+    rm -f "$HOME/.local/bin/satty"
+    systemctl --user unmask hypridle.service hyprsunset.service >/dev/null 2>&1 || true
+    sddm_theme="/usr/share/sddm/themes/simple_sddm_2"
+    for f in "$sddm_theme/theme.conf" "$sddm_theme/Backgrounds/default"; do
+        [ -e "$f" ] && sudo chown root:root "$f"
+    done
+    rm -rf "$HOME/.local/share/fonts/ClaudeIcon" "${XDG_STATE_HOME:-$HOME/.local/state}/holyjoey-dots"
+    zbak="$(ls -1 "$HOME"/.zshrc.my-dots-backup-[0-9]* 2>/dev/null | sort | tail -n1)"
+    [ -n "$zbak" ] && cp -a "$zbak" "$HOME/.zshrc"
+    echo "${OK:-[OK]} HolyJoey extras removed."
+fi
+
 printf "\n%.0s" {1..1}
 echo -e "$MAGENTA Hyprland and related components have been uninstalled.$RESET"
 echo -e "$YELLOW It is recommended to reboot your system now.$RESET"

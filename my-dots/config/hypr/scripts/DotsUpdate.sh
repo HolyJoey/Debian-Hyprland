@@ -31,9 +31,11 @@ if [ "$behind" -eq 0 ]; then
   exit 0
 fi
 
-latest=$(git -C "$repo" log -1 --format='%s' @{u})
+latest=$(git -C "$repo" log -5 --format='- %s' HEAD..@{u})
+[ "$behind" -gt 5 ] && latest="$latest
+- ..."
 response=$(notify-send -t 15000 -A update=Update -A no=Later -i "$iDIR/note.png" "$title" \
-  "$behind update(s) available.\nLatest: $latest")
+  "$behind update(s) available:\n$latest")
 [ "$response" = update ] || exit 0
 
 # Pull, then re-apply. apply-my-dots.sh lists what it overwrites, asks first and

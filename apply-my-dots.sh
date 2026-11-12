@@ -15,6 +15,10 @@
 #                                      install.sh runs it after the SDDM theme)
 #      ./apply-my-dots.sh --fresh     (reset everything, also what an update keeps)
 #      ./apply-my-dots.sh --dry-run   (only show what would happen, change nothing)
+#      ./apply-my-dots.sh --restore   (put back the newest backup made by this script)
+#
+#  Output is also saved to ~/.local/state/holyjoey-dots/apply-<date>.log. The
+#  three newest config backups are kept; older ones are removed.
 #
 #  Run again on a machine that already has these dots (the Waybar update button
 #  does this) it is an UPDATE: your monitor layout, workspace rules, keyboard
@@ -41,6 +45,7 @@ want_wp=0
 SDDM_ONLY=0
 FRESH=0
 DRY_RUN=0
+RESTORE=0
 for arg in "$@"; do
     if [ "$want_wp" -eq 1 ]; then USER_WP="$arg"; want_wp=0; continue; fi
     case "$arg" in
@@ -49,6 +54,7 @@ for arg in "$@"; do
     --sddm-only) SDDM_ONLY=1 ;;
     --fresh) FRESH=1 ;;
     --dry-run) DRY_RUN=1 ;;
+    --restore) RESTORE=1 ;;
     -y | --yes) ASSUME_YES=1 ;;
     --no-satty) BUILD_SATTY=0 ;;
     --no-wallpapers) GET_BANK=0 ;;
@@ -60,9 +66,10 @@ for arg in "$@"; do
     esac
 done
 
-OK="$(tput setaf 2 2>/dev/null)[OK]$(tput sgr0 2>/dev/null)"
-NOTE="$(tput setaf 3 2>/dev/null)[NOTE]$(tput sgr0 2>/dev/null)"
-WARN="$(tput setaf 1 2>/dev/null)[WARN]$(tput sgr0 2>/dev/null)"
+# "|| true": without a terminal tput fails, and set -e would end the script here.
+OK="$(tput setaf 2 2>/dev/null || true)[OK]$(tput sgr0 2>/dev/null || true)"
+NOTE="$(tput setaf 3 2>/dev/null || true)[NOTE]$(tput sgr0 2>/dev/null || true)"
+WARN="$(tput setaf 1 2>/dev/null || true)[WARN]$(tput sgr0 2>/dev/null || true)"
 say() { echo -e "$*"; }
 
 if [ "$(id -u)" -eq 0 ]; then
@@ -70,6 +77,46 @@ if [ "$(id -u)" -eq 0 ]; then
     exit 1
 fi
 [ -d "$SRC/config" ] || { say "$WARN $SRC/config not found."; exit 1; }
+if ! command -v apt-get >/dev/null 2>&1; then
+    say "$WARN This is made for Debian (apt-get not found). Nothing was changed."
+    exit 1
+fi
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/holyjoey-dots"
+
+# Keep the newest three of a set of dated backups/logs.
+prune_old() {
+    { ls -1d "$@" 2>/dev/null || true; } | sort | head -n -3 | while IFS= read -r old; do
+        rm -rf -- "$old"
+    done
+}
+
+# ---------------------------------------------------------------- restore
+if [ "$RESTORE" -eq 1 ]; then
+    last="$({ ls -1d "$CFG"/my-dots-backup-[0-9]* 2>/dev/null || true; } | sort | tail -n1)"
+    [ -d "$last" ] || { say "$WARN No backup found in $CFG."; exit 1; }
+    say "$NOTE Restoring $(ls "$last" | tr '\n' ' ')from $last"
+    if [ "$ASSUME_YES" -ne 1 ]; then
+        read -rp "This replaces the current versions of those folders. Continue? [y/N] " ans
+        [[ "$ans" =~ ^[Yy]$ ]] || { say "Aborted."; exit 0; }
+    fi
+    for d in "$last"/*/; do
+        name="$(basename "$d")"
+        mkdir -p "$CFG/$name"
+        rsync -a --checksum --delete "$d" "$CFG/$name/"
+        say "$OK $name"
+    done
+    zbak="$HOME/.zshrc.my-dots-backup-${last##*my-dots-backup-}"
+    [ -f "$zbak" ] && cp -a "$zbak" "$HOME/.zshrc" && say "$OK ~/.zshrc"
+    say "$OK Restored. Log out and back in."
+    exit 0
+fi
+
+# ---------------------------------------------------------------- log
+if [ "$DRY_RUN" -ne 1 ] && [ "$SDDM_ONLY" -ne 1 ]; then
+    mkdir -p "$STATE_DIR"
+    prune_old "$STATE_DIR"/apply-[0-9]*.log
+    exec > >(tee -a "$STATE_DIR/apply-$STAMP.log") 2>&1
+fi
 
 # ---------------------------------------------------------------- SDDM
 # The login screen follows the wallpaper (hypr/scripts/SddmAutoSync.sh, run on
@@ -80,9 +127,12 @@ fi
 sddm_setup() {
     local theme="/usr/share/sddm/themes/simple_sddm_2" wp
     [ -f "$theme/theme.conf" ] || return 0
-    sudo install -d -m 755 "$theme/Backgrounds"
-    sudo touch "$theme/Backgrounds/default"
-    sudo chown "$(id -un)" "$theme/theme.conf" "$theme/Backgrounds/default"
+    # Already ours (an update): no sudo, so no password prompt.
+    if [ ! -O "$theme/theme.conf" ] || [ ! -O "$theme/Backgrounds/default" ]; then
+        sudo install -d -m 755 "$theme/Backgrounds"
+        sudo touch "$theme/Backgrounds/default"
+        sudo chown "$(id -un)" "$theme/theme.conf" "$theme/Backgrounds/default"
+    fi
     wp="$(readlink -f "$CFG/rofi/.current_wallpaper" 2>/dev/null || true)"
     if [ -f "$wp" ] && [[ ! "$wp" =~ \.(mp4|mkv|mov|webm)$ ]]; then
         cat -- "$wp" >"$theme/Backgrounds/default"
@@ -198,7 +248,6 @@ if [ -n "$FOUND_WP" ]; then
 fi
 
 # ---------------------------------------------------------------- update or fresh
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/holyjoey-dots"
 UPDATE=0
 if [ "$FRESH" -ne 1 ] && [ -f "$STATE_DIR/repo" ] && [ -f "$CFG/hypr/.initial_startup_done" ]; then
     UPDATE=1
@@ -338,6 +387,7 @@ for src_dir in "$SRC"/config/*/; do
     say "$OK $name"
 done
 [ -d "$backup_root" ] && say "$NOTE Previous configs backed up to $backup_root"
+prune_old "$CFG"/my-dots-backup-[0-9]*
 
 # systemd user drop-ins (polkit agent, portal): merge, so other units survive
 mkdir -p "$CFG/systemd"
@@ -453,6 +503,7 @@ if [ -f "$HOME/.zshrc" ]; then
     cp -a "$HOME/.zshrc" "$HOME/.zshrc.my-dots-backup-$STAMP"
 fi
 cp "$SRC/home/.zshrc" "$HOME/.zshrc"
+prune_old "$HOME"/.zshrc.my-dots-backup-[0-9]*
 [ -d "$HOME/.oh-my-zsh" ] || say "$NOTE ~/.zshrc expects oh-my-zsh (select the zsh option in install.sh)."
 # My agnosterzak prompt (colours follow the wallpaper). custom/themes wins over
 # the stock theme of the same name that install-scripts/zsh.sh puts in themes/.
@@ -527,8 +578,8 @@ fi
 
 # ---------------------------------------------------------------- update button
 # Waybar's update button (hypr/scripts/DotsUpdate.sh) checks this clone against GitHub.
-mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}/holyjoey-dots"
-echo "$REPO_DIR" > "${XDG_STATE_HOME:-$HOME/.local/state}/holyjoey-dots/repo"
+mkdir -p "$STATE_DIR"
+echo "$REPO_DIR" > "$STATE_DIR/repo"
 
 # ---------------------------------------------------------------- reload
 if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
@@ -549,4 +600,6 @@ say "      Wallpaper:  $WP"
 [ -f /usr/share/sddm/themes/simple_sddm_2/theme.conf ] ||
     say "      Login screen: SDDM theme not installed, so it does not follow the wallpaper."
 [ "$GET_BANK" -eq 1 ] || say "      Wallpaper pack skipped (--no-wallpapers)."
+say "      Log:        $STATE_DIR/apply-$STAMP.log"
+say "      Undo:       ./apply-my-dots.sh --restore"
 say "      Log out and back in for everything to take effect."
