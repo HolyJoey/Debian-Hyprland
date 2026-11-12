@@ -77,10 +77,6 @@ if [ "$(id -u)" -eq 0 ]; then
     exit 1
 fi
 [ -d "$SRC/config" ] || { say "$WARN $SRC/config not found."; exit 1; }
-if ! command -v apt-get >/dev/null 2>&1; then
-    say "$WARN This is made for Debian (apt-get not found). Nothing was changed."
-    exit 1
-fi
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/holyjoey-dots"
 
 # Keep the newest three of a set of dated backups/logs.
