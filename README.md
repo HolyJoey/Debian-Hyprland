@@ -24,6 +24,7 @@ Already have Hyprland and only want the configs?
 ./apply-my-dots.sh --yes            # no questions
 ./apply-my-dots.sh --no-satty       # skip building satty
 ./apply-my-dots.sh --no-wallpapers  # skip the ~800MB wallpaper download
+./apply-my-dots.sh --wallpaper ~/Pictures/mine.png   # theme everything to this image
 ```
 
 Every folder it replaces is backed up to `~/.config/my-dots-backup-<date>/` first.
@@ -82,6 +83,14 @@ that are not in KooL's [Wallpaper-Bank](https://github.com/LinuxBeginnings/Wallp
 ship in [`my-dots/wallpapers/`](my-dots/wallpapers). The other 158 (~800MB) are downloaded
 from the bank, pinned to the exact version I have. Skip that download with
 `./apply-my-dots.sh --no-wallpapers`.
+
+**Your own wallpaper comes along.** Set the wallpaper you want in your current desktop
+(GNOME, KDE Plasma, XFCE, Cinnamon, MATE) before installing. The installer copies it into
+`~/Pictures/wallpapers`, and the first Hyprland login themes everything to it: Hyprland borders,
+Waybar, rofi, the terminal prompt, fastfetch, the lock screen and the SDDM login screen (the
+picture is on the login screen from the very first boot; its colours follow after the first
+login). Pick a file yourself with `./install.sh --wallpaper <file>`. If nothing is found you get
+the dedsec wallpaper.
 
 | Keys | What it does |
 | --- | --- |

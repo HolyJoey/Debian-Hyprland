@@ -2,8 +2,10 @@
 # Keep the SDDM login screen (simple_sddm_2) in step with the desktop wallpaper.
 # Called in the background by WallustSwww.sh after wallust has written its
 # templates, so every wallpaper change (picker, random, auto-change, boot)
-# updates it. Needs passwordless sudo; without it this quietly does nothing
-# (the manual "SDDM wallpaper" quick-settings entry still works).
+# updates it. apply-my-dots.sh makes the two files it writes (the background
+# and theme.conf) owned by the user; otherwise it needs passwordless sudo, and
+# without either it quietly does nothing (the manual "SDDM wallpaper"
+# quick-settings entry still works).
 #
 # Colours come from the wallust palette, but are checked against the part of
 # the wallpaper the login form sits on: text gets at least 4.5:1 contrast, and
@@ -24,7 +26,19 @@ log="$cache/log"
 mkdir -p "$cache"
 
 [[ -f "$theme_conf" && -f "$colors" ]] || exit 0
-sudo -n true 2>/dev/null || { echo "$(date) no passwordless sudo, skipped" >>"$log"; exit 0; }
+as_root=()
+if [[ ! -w "$theme_conf" || ! -w "$theme_dir/Backgrounds/default" ]]; then
+    sudo -n true 2>/dev/null || { echo "$(date) theme files not writable and no passwordless sudo, skipped" >>"$log"; exit 0; }
+    as_root=(sudo -n)
+fi
+# Writable files are overwritten in place, so they keep their owner.
+put() {
+    if [[ ${#as_root[@]} -gt 0 ]]; then
+        sudo -n install -m 644 "$1" "$2"
+    else
+        cat -- "$1" >"$2"
+    fi
+}
 
 # Only one run at a time; a newer wallpaper change wins over an older one.
 exec 9>"$cache/lock"
@@ -152,7 +166,7 @@ while IFS='=' read -r key val; do
     sed -i "s|^${key}=\".*\"|${key}=\"${val}\"|" "$tmp"
 done <<<"$settings"
 
-sudo -n install -m 644 "$bg" "$theme_dir/Backgrounds/default" &&
-    sudo -n install -m 644 "$tmp" "$theme_conf" &&
+put "$bg" "$theme_dir/Backgrounds/default" &&
+    put "$tmp" "$theme_conf" &&
     printf '%s\n' "$stamp" >"$cache/stamp" &&
     echo "$(date) synced $(basename "$wallpaper")" >>"$log"

@@ -79,6 +79,8 @@ Options:
   --tty                 Use simple TTY prompts instead of whiptail dialogs
   --interactive         Show the original KooL menus instead of installing
                         HolyJoey's setup unattended (the default)
+  --wallpaper <file>    Theme everything to this wallpaper. Default: the one your
+                        current desktop (GNOME, KDE, XFCE, ...) uses, else dedsec
   -h, --help            Show this help and exit
 
 Notes:
@@ -603,6 +605,7 @@ HYPR_AUTO_MODE_POLICY="${HYPR_AUTO_MODE_POLICY:-source-default}"
 args=("$@")
 FORCE_REINSTALL=0
 TTY_MODE=0
+MY_WALLPAPER=""
 for ((i = 0; i < ${#args[@]}; i++)); do
     case "${args[$i]}" in
     --build-trixie)
@@ -627,6 +630,14 @@ for ((i = 0; i < ${#args[@]}; i++)); do
         ;;
     --tty)
         TTY_MODE=1
+        ;;
+    --wallpaper)
+        if [ $((i + 1)) -lt ${#args[@]} ]; then
+            MY_WALLPAPER="$(readlink -f -- "${args[$((i + 1))]}")"
+        fi
+        ;;
+    --wallpaper=*)
+        MY_WALLPAPER="$(readlink -f -- "${args[$i]#--wallpaper=}")"
         ;;
     -h | --help)
         print_help
@@ -1572,7 +1583,7 @@ for option in "${options[@]}"; do
             }
         fi
         echo "${INFO} Applying ${SKY_BLUE}HolyJoey's dots${RESET}..." | tee -a "$LOG"
-        bash "$(dirname "$(readlink -f "$0")")/apply-my-dots.sh" --yes || {
+        bash "$(dirname "$(readlink -f "$0")")/apply-my-dots.sh" --yes ${MY_WALLPAPER:+--wallpaper "$MY_WALLPAPER"} || {
             echo "${ERROR:-[ERROR]} Applying HolyJoey's dots failed" | tee -a "$LOG"
             exit 1
         }
@@ -1582,6 +1593,12 @@ for option in "${options[@]}"; do
         ;;
     esac
 done
+
+# HolyJoey: the SDDM theme is installed after the dots step, so hand its
+# background over to the login-screen sync now (see apply-my-dots.sh).
+if [[ " ${options[*]} " == *" dots "* ]]; then
+    bash "$(dirname "$(readlink -f "$0")")/apply-my-dots.sh" --sddm-only || true
+fi
 
 # Perform cleanup
 printf "\n${OK} Performing some clean up.\n"

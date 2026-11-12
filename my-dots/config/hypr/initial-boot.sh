@@ -62,11 +62,16 @@ if [ ! -f "${XDG_CONFIG_HOME:-$HOME/.config}/hypr/.initial_startup_done" ]; then
     set_interface_pref_with_retry icon-theme "'$icon_theme'" "'$icon_theme'" || true
     set_interface_pref_with_retry cursor-theme "'$cursor_theme'" "'$cursor_theme'" || true
     gsettings set org.gnome.desktop.interface cursor-size 24 > /dev/null 2>&1 || true
-    # Initialize wallust and wallpaper
+    # Initialize wallust and wallpaper.
+    # apply-my-dots.sh points rofi's .current_wallpaper at the wallpaper the user
+    # had before installing (or dedsec); use that real file, so the picker and
+    # everything themed from it (WallustSwww.sh) see its real path, not the copy.
+	real_wp="$(readlink -f "${XDG_CONFIG_HOME:-$HOME/.config}/rofi/.current_wallpaper" 2>/dev/null)"
+	[ -f "$real_wp" ] && wallpaper="$real_wp"
 	if [ -f "$wallpaper" ]; then
 		wallust "${wallust_args[@]}" run -s "$wallpaper" > /dev/null 
-		$WWW query || $DAEMON && $swww $wallpaper $effect
-	    "$scriptsDir/WallustSwww.sh" > /dev/null 2>&1 & 
+		$WWW query || $DAEMON && $swww "$wallpaper" $effect
+	    "$scriptsDir/WallustSwww.sh" "$wallpaper" > /dev/null 2>&1 & 
 	fi
 
      # NIXOS initiate GTK dark mode and apply icon and cursor theme

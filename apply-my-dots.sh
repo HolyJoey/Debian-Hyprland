@@ -10,6 +10,13 @@
 #      ./apply-my-dots.sh --yes      (no questions)
 #      ./apply-my-dots.sh --no-satty (skip building satty)
 #      ./apply-my-dots.sh --no-wallpapers (skip the ~800MB wallpaper download)
+#      ./apply-my-dots.sh --wallpaper FILE (theme everything to FILE)
+#      ./apply-my-dots.sh --sddm-only (only the login-screen step below;
+#                                      install.sh runs it after the SDDM theme)
+#
+#  Without --wallpaper, the wallpaper you already use is kept: the one set in
+#  GNOME, KDE Plasma, XFCE, Cinnamon, MATE or an earlier KooL/awww setup. The
+#  first Hyprland login colours everything from it. Nothing found -> dedsec.
 # ==================================================
 set -euo pipefail
 
@@ -23,8 +30,15 @@ BANK_COMMIT="f6fde9158feb6e0a283560c363233ff57ffdb65c"   # LinuxBeginnings/Wallp
 ASSUME_YES=0
 BUILD_SATTY=1
 GET_BANK=1
+USER_WP=""
+want_wp=0
+SDDM_ONLY=0
 for arg in "$@"; do
+    if [ "$want_wp" -eq 1 ]; then USER_WP="$arg"; want_wp=0; continue; fi
     case "$arg" in
+    --wallpaper) want_wp=1 ;;
+    --wallpaper=*) USER_WP="${arg#--wallpaper=}" ;;
+    --sddm-only) SDDM_ONLY=1 ;;
     -y | --yes) ASSUME_YES=1 ;;
     --no-satty) BUILD_SATTY=0 ;;
     --no-wallpapers) GET_BANK=0 ;;
@@ -47,6 +61,119 @@ if [ "$(id -u)" -eq 0 ]; then
 fi
 [ -d "$SRC/config" ] || { say "$WARN $SRC/config not found."; exit 1; }
 
+# ---------------------------------------------------------------- SDDM
+# The login screen follows the wallpaper (hypr/scripts/SddmAutoSync.sh, run on
+# every wallpaper change). It only rewrites the theme's background and
+# theme.conf, so those two files are handed to this user instead of needing
+# passwordless sudo. The current wallpaper goes on the login screen right away,
+# so even the first boot shows it; the colours follow on the first login.
+sddm_setup() {
+    local theme="/usr/share/sddm/themes/simple_sddm_2" wp
+    [ -f "$theme/theme.conf" ] || return 0
+    sudo install -d -m 755 "$theme/Backgrounds"
+    sudo touch "$theme/Backgrounds/default"
+    sudo chown "$(id -un)" "$theme/theme.conf" "$theme/Backgrounds/default"
+    wp="$(readlink -f "$CFG/rofi/.current_wallpaper" 2>/dev/null || true)"
+    if [ -f "$wp" ] && [[ ! "$wp" =~ \.(mp4|mkv|mov|webm)$ ]]; then
+        cat -- "$wp" >"$theme/Backgrounds/default"
+        rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/sddm_autosync/stamp"
+        say "$OK SDDM login screen: $(basename "$wp")"
+    fi
+}
+if [ "$SDDM_ONLY" -eq 1 ]; then
+    sddm_setup
+    exit 0
+fi
+if [ -n "$USER_WP" ]; then
+    USER_WP="$(readlink -f -- "$USER_WP" 2>/dev/null || true)"
+    [ -f "$USER_WP" ] || { say "$WARN --wallpaper: file not found."; exit 2; }
+fi
+
+# ---------------------------------------------------------------- wallpaper detect
+# Runs before anything is overwritten: find the wallpaper this user already has.
+is_image() {
+    [ -f "$1" ] && [ -r "$1" ] || return 1
+    case "${1,,}" in *.png | *.jpg | *.jpeg | *.webp | *.bmp | *.gif) return 0 ;; esac
+    file -b --mime-type "$1" 2>/dev/null | grep -q '^image/'
+}
+# file:///a%20b.png -> /a b.png
+uri_to_path() {
+    local p="${1#\'}"; p="${p%\'}"; p="${p#file://}"
+    printf '%b' "${p//%/\\x}"
+}
+# GNOME's default is an XML (light/dark or slideshow): take its first image.
+# A KDE wallpaper package is a folder: take its biggest image.
+resolve_wp() {
+    local p="$1" f
+    [ -n "$p" ] || return 1
+    if [ -d "$p" ]; then
+        for d in "$p/contents/images_dark" "$p/contents/images" "$p"; do
+            f="$(find "$d" -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) \
+                -printf '%s\t%p\n' 2>/dev/null | sort -rn | head -n1 | cut -f2-)"
+            [ -n "$f" ] && { printf '%s\n' "$f"; return 0; }
+        done
+        return 1
+    fi
+    if [[ "${p,,}" == *.xml ]] && [ -r "$p" ]; then
+        f="$(grep -oE '<(file|filename)>[^<]+' "$p" | head -n1 | sed 's/^<[a-z]*>//')"
+        p="$f"
+    fi
+    is_image "$p" && printf '%s\n' "$p"
+}
+detect_wallpaper() {
+    local c
+    # 1. an earlier KooL / HolyJoey install
+    c="$(readlink -f "$CFG/rofi/.current_wallpaper" 2>/dev/null)" && resolve_wp "$c" && return
+    # 2. GNOME (dark-mode image first when dark mode is on), Budgie, Cinnamon, MATE
+    if command -v gsettings >/dev/null 2>&1; then
+        local keys=()
+        if gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null | grep -q dark; then
+            keys+=("org.gnome.desktop.background picture-uri-dark")
+        fi
+        keys+=("org.gnome.desktop.background picture-uri"
+            "org.cinnamon.desktop.background picture-uri"
+            "org.mate.background picture-filename")
+        for k in "${keys[@]}"; do
+            # shellcheck disable=SC2086
+            c="$(gsettings get $k 2>/dev/null)" || continue
+            resolve_wp "$(uri_to_path "$c")" && return
+        done
+    fi
+    # 3. KDE Plasma
+    local kde="$CFG/plasma-org.kde.plasma.desktop-appletsrc"
+    if [ -r "$kde" ]; then
+        while read -r c; do
+            resolve_wp "$(uri_to_path "$c")" && return
+        done < <(sed -n 's/^Image=//p' "$kde")
+    fi
+    # 4. XFCE
+    if command -v xfconf-query >/dev/null 2>&1; then
+        while read -r k; do
+            resolve_wp "$(xfconf-query -c xfce4-desktop -p "$k" 2>/dev/null)" && return
+        done < <(xfconf-query -c xfce4-desktop -l 2>/dev/null | grep '/last-image$')
+    fi
+    # 5. an awww/swww or hyprpaper already showing something
+    for q in awww swww; do
+        command -v "$q" >/dev/null 2>&1 || continue
+        c="$("$q" query 2>/dev/null | sed -n 's/.*image: //p' | head -n1)"
+        resolve_wp "$c" && return
+    done
+    c="$(sed -n 's/^ *wallpaper *= *[^,]*, *//p' "$CFG/hypr/hyprpaper.conf" 2>/dev/null | head -n1)"
+    resolve_wp "${c/#\~/$HOME}" && return
+    return 1
+}
+if [ -n "$USER_WP" ]; then
+    FOUND_WP="$USER_WP"
+else
+    FOUND_WP="$(detect_wallpaper || true)"
+fi
+# Keep a private copy: it may live in a folder this script is about to replace.
+if [ -n "$FOUND_WP" ]; then
+    WP_TMP="$(mktemp -d)"
+    trap 'rm -rf "$WP_TMP"' EXIT
+    cp -- "$FOUND_WP" "$WP_TMP/$(basename "$FOUND_WP")" || FOUND_WP=""
+fi
+
 if [ "$ASSUME_YES" -ne 1 ]; then
     say "$NOTE This overwrites these folders in $CFG (a backup of each is made first):"
     say "      $(ls "$SRC/config" | tr '\n' ' ')"
@@ -59,6 +186,7 @@ fi
 # Tools the customised configs/scripts call that the base install may lack.
 pkgs=(rsync jq network-manager grim slurp wl-clipboard libnotify-bin fonts-roboto
     zenity imagemagick libglib2.0-bin python3   # wallpaper picker: add dialog, tile, trash; fastfetch accent
+    python3-pil file                            # SDDM colours from the wallpaper; wallpaper detection
     baobab)                                     # Waybar: right-click on Disk
 # VA-API driver for Intel iGPUs (see LIBVA_DRIVER_NAME below)
 if lspci 2>/dev/null | grep -Ei 'vga|3d|display' | grep -qi intel; then
@@ -170,14 +298,37 @@ if [ "$GET_BANK" -eq 1 ]; then
     fi
     rm -rf "$bank_dir"
 fi
+# The wallpaper found earlier (or given with --wallpaper) replaces dedsec. It is
+# copied into the wallpaper folder so the picker shows it and it survives the
+# old desktop being removed.
+if [ -n "$FOUND_WP" ]; then
+    name="$(basename "$FOUND_WP")"
+    src_copy="$WP_TMP/$name"
+    if [ "$(readlink -f "$FOUND_WP")" = "$(readlink -f "$WP_DIR/$name" 2>/dev/null)" ]; then
+        WP="$WP_DIR/$name"
+    elif [ -e "$WP_DIR/$name" ] && ! cmp -s "$src_copy" "$WP_DIR/$name"; then
+        WP="$WP_DIR/my-${name}"
+        cp -- "$src_copy" "$WP"
+    else
+        WP="$WP_DIR/$name"
+        cp -n -- "$src_copy" "$WP"
+    fi
+    say "$OK Wallpaper: $WP (everything gets themed to it on first login)"
+fi
+# initial-boot.sh shows .wallpaper_current and runs wallust on it at first login.
+for f in "$CFG/hypr/wallpaper_effects/".wallpaper_current*; do
+    [ -e "$f" ] && cp -- "$WP" "$f"
+done
 ln -sfn "$WP" "$CFG/hypr/wallpaper_effects/.hyprlock_current"
 ln -sfn "$WP" "$CFG/rofi/.current_wallpaper"
-# .wallpaper_current (from the snapshot) is a copy of the same image. Since the
+# .wallpaper_current is now a copy of the same image. Since the
 # snapshot has no .initial_startup_done, KooL's initial-boot.sh re-runs on next
 # login: it sets the GTK/icon/cursor themes and generates wallust colours from it.
 # Forget fastfetch/gen_config.py's "colours unchanged" fingerprint, so that run
 # rebuilds the fastfetch configs, prompt accent and Waybar calendar for real.
 rm -f "$HOME/.cache/fastfetch-gen.key"
+
+sddm_setup
 
 # ---------------------------------------------------------------- shell
 if [ -f "$HOME/.zshrc" ]; then
