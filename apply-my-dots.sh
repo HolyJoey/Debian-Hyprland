@@ -13,6 +13,11 @@
 #      ./apply-my-dots.sh --wallpaper FILE (theme everything to FILE)
 #      ./apply-my-dots.sh --sddm-only (only the login-screen step below;
 #                                      install.sh runs it after the SDDM theme)
+#      ./apply-my-dots.sh --fresh     (reset everything, also what an update keeps)
+#
+#  Run again on a machine that already has these dots (the Waybar update button
+#  does this) it is an UPDATE: your monitor layout, workspace rules, keyboard
+#  layout, Waybar layout/style and GTK/icon/cursor themes are kept.
 #
 #  Without --wallpaper, the wallpaper you already use is kept: the one set in
 #  GNOME, KDE Plasma, XFCE, Cinnamon, MATE or an earlier KooL/awww setup. The
@@ -33,12 +38,14 @@ GET_BANK=1
 USER_WP=""
 want_wp=0
 SDDM_ONLY=0
+FRESH=0
 for arg in "$@"; do
     if [ "$want_wp" -eq 1 ]; then USER_WP="$arg"; want_wp=0; continue; fi
     case "$arg" in
     --wallpaper) want_wp=1 ;;
     --wallpaper=*) USER_WP="${arg#--wallpaper=}" ;;
     --sddm-only) SDDM_ONLY=1 ;;
+    --fresh) FRESH=1 ;;
     -y | --yes) ASSUME_YES=1 ;;
     --no-satty) BUILD_SATTY=0 ;;
     --no-wallpapers) GET_BANK=0 ;;
@@ -174,6 +181,29 @@ if [ -n "$FOUND_WP" ]; then
     cp -- "$FOUND_WP" "$WP_TMP/$(basename "$FOUND_WP")" || FOUND_WP=""
 fi
 
+# ---------------------------------------------------------------- update or fresh
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/holyjoey-dots"
+UPDATE=0
+if [ "$FRESH" -ne 1 ] && [ -f "$STATE_DIR/repo" ] && [ -f "$CFG/hypr/.initial_startup_done" ]; then
+    UPDATE=1
+    say "$NOTE These dots are already installed: updating (monitors, keyboard layout, Waybar layout and themes are kept; --fresh resets them)."
+fi
+
+# Keyboard layout: an update keeps the one in use; a fresh install takes the
+# system's (/etc/default/keyboard) instead of my "us".
+KB_LAYOUT=""
+KB_VARIANT=""
+old_sys="$CFG/hypr/configs/SystemSettings.conf"
+if [ "$UPDATE" -eq 1 ] && [ -f "$old_sys" ]; then
+    KB_LAYOUT="$(sed -n 's/^ *kb_layout *= *//p' "$old_sys" | head -n1 | tr -d '[:space:]')"
+    KB_VARIANT="$(sed -n 's/^ *kb_variant *= *//p' "$old_sys" | head -n1 | tr -d '[:space:]')"
+elif [ -r /etc/default/keyboard ]; then
+    KB_LAYOUT="$(. /etc/default/keyboard 2>/dev/null; echo "${XKBLAYOUT:-}" | tr -d '[:space:]')"
+    KB_VARIANT="$(. /etc/default/keyboard 2>/dev/null; echo "${XKBVARIANT:-}" | tr -d '[:space:]')"
+fi
+[[ "$KB_LAYOUT" =~ ^[A-Za-z0-9_,-]+$ ]] || KB_LAYOUT=""
+[[ "$KB_VARIANT" =~ ^[A-Za-z0-9_,-]*$ ]] || KB_VARIANT=""
+
 if [ "$ASSUME_YES" -ne 1 ]; then
     say "$NOTE This overwrites these folders in $CFG (a backup of each is made first):"
     say "      $(ls "$SRC/config" | tr '\n' ' ')"
@@ -187,6 +217,8 @@ fi
 pkgs=(rsync jq network-manager grim slurp wl-clipboard libnotify-bin fonts-roboto
     zenity imagemagick libglib2.0-bin python3   # wallpaper picker: add dialog, tile, trash; fastfetch accent
     python3-pil file                            # SDDM colours from the wallpaper; wallpaper detection
+    firefox-esr neovim                          # SUPER+B; EDITOR in 01-UserDefaults.conf
+    network-manager-gnome lsd                   # Waybar network click (nm-connection-editor); ls alias in .zshrc
     baobab)                                     # Waybar: right-click on Disk
 # VA-API driver for Intel iGPUs (see LIBVA_DRIVER_NAME below)
 if lspci 2>/dev/null | grep -Ei 'vga|3d|display' | grep -qi intel; then
@@ -230,6 +262,13 @@ protect=(
     --filter='P /style.css'
 )
 
+# An update leaves what is this machine's own: its monitors and workspace
+# rules, and the marker that stops initial-boot.sh resetting the themes.
+if [ "$UPDATE" -eq 1 ]; then
+    protect+=(--exclude='/monitors.conf' --exclude='/workspaces.conf'
+        --filter='P /.initial_startup_done')
+fi
+
 backup_root="$CFG/my-dots-backup-$STAMP"
 for src_dir in "$SRC"/config/*/; do
     name="$(basename "$src_dir")"
@@ -267,9 +306,20 @@ fc-cache -f "$HOME/.local/share/fonts" >/dev/null 2>&1 || true
 grep -rIl '@HOME@' "${CFG}"/{hypr,qt5ct,qt6ct} 2>/dev/null |
     xargs -r sed -i "s#@HOME@#${HOME}#g"
 
-# Waybar layout + style (relative symlinks, so they survive a username change)
-ln -sfn configs/TOP-Everforest "$CFG/waybar/config"
-ln -sfn style/Dark-Wallust-Obsidian-Edge.css "$CFG/waybar/style.css"
+if [ -n "$KB_LAYOUT" ]; then
+    sed -i -E "s|^( *kb_layout *=).*|\\1 $KB_LAYOUT|; s|^( *kb_variant *=).*|\\1 $KB_VARIANT|" \
+        "$CFG/hypr/configs/SystemSettings.conf"
+    say "$OK Keyboard layout: $KB_LAYOUT${KB_VARIANT:+ ($KB_VARIANT)}"
+fi
+
+# Waybar layout + style (relative symlinks, so they survive a username change).
+# An update keeps the layout/style picked on this machine.
+if [ "$UPDATE" -ne 1 ] || [ ! -e "$CFG/waybar/config" ]; then
+    ln -sfn configs/TOP-Everforest "$CFG/waybar/config"
+fi
+if [ "$UPDATE" -ne 1 ] || [ ! -e "$CFG/waybar/style.css" ]; then
+    ln -sfn style/Dark-Wallust-Obsidian-Edge.css "$CFG/waybar/style.css"
+fi
 
 # Scripts must stay executable
 chmod +x "$CFG/hypr/scripts/"* "$CFG/hypr/UserScripts/"* "$CFG/hypr/initial-boot.sh" 2>/dev/null || true
@@ -417,6 +467,18 @@ if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
     hyprctl reload >/dev/null 2>&1 || true
     pkill -x waybar >/dev/null 2>&1 || true
     (waybar >/dev/null 2>&1 &)
+    # The snapshot's generated colour files are for my wallpaper; an update has
+    # no first-login run to redo them, so recolour from the current one now.
+    if [ "$UPDATE" -eq 1 ] && [ -x "$CFG/hypr/scripts/WallustSwww.sh" ]; then
+        "$CFG/hypr/scripts/WallustSwww.sh" "$WP" >/dev/null 2>&1 || true
+    fi
 fi
 
-say "$OK HolyJoey dots applied. Log out and back in for everything to take effect."
+say ""
+say "$OK HolyJoey dots $([ "$UPDATE" -eq 1 ] && echo updated || echo applied)."
+say "      Wallpaper:  $WP"
+[ -d "$backup_root" ] && say "      Backups:    $backup_root (and ~/.zshrc.my-dots-backup-$STAMP)"
+[ -f /usr/share/sddm/themes/simple_sddm_2/theme.conf ] ||
+    say "      Login screen: SDDM theme not installed, so it does not follow the wallpaper."
+[ "$GET_BANK" -eq 1 ] || say "      Wallpaper pack skipped (--no-wallpapers)."
+say "      Log out and back in for everything to take effect."

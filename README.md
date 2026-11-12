@@ -92,6 +92,14 @@ picture is on the login screen from the very first boot; its colours follow afte
 login). Pick a file yourself with `./install.sh --wallpaper <file>`. If nothing is found you get
 the dedsec wallpaper.
 
+The login screen part needs SDDM. If another login manager (GDM, LightDM) is already running, the
+installer leaves it alone and skips SDDM, so that login screen keeps its own look.
+
+**Updating.** Running `apply-my-dots.sh` again (the Waybar update button does) keeps what belongs
+to your machine: monitor layout, workspace rules, keyboard layout, Waybar layout/style and the
+GTK/icon/cursor themes. `--fresh` resets those too. On a first install the keyboard layout is taken
+from the system and monitors use their preferred mode.
+
 | Keys | What it does |
 | --- | --- |
 | SUPER + W | Wallpaper picker: a rofi grid with previews |
